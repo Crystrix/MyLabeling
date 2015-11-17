@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en" style="height:100%">
+	<head>
+		<title>Progressive Grouping</title>
+		<meta charset="utf-8">
+		<meta name="grouping" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	
+		
+		
+		
+		<script src="js/jquery/jquery-2.1.3.min.js"></script>
+		<script src="js/jquery/jquery-ui.js"></script>
+	
+		<script src="js/socket.io-1.3.4.js"></script>
+		
+		<script src="/build/three.js"></script>
+		<script src="/js/three/STLLoader.js"></script>
+		<script src="/js/three/OrbitControls.js"></script>
+		<link rel="stylesheet" href="css/jquery-ui.css">
+	</head>
+	
+	<style>
+			
+		#newModelGallery { float: left; width: 100%;height:60%; overflow: auto; background-color:0xf5f5f5}
+		.newModelGallery.custom-state-active { background: #eee; }
+		.newModelGallery div { float: left; width: 96px; padding: 0.4em; margin: 0 0.4em 0.4em 0; text-align: center; }
+		.newModelGallery li h5 { margin: 0 0 0.4em; cursor: move; }
+		.newModelGallery li a { float: right; }
+		.newModelGallery li a.ui-icon-zoomin { float: left; }
+		.newModelGallery li img { width: 100%; cursor: move; }
+		
+		
+		#modelGallery { float: left; width: 100%;height:60%; overflow: auto; background-color:0xf5f5f5}
+		.modelGallery.custom-state-active { background: #eee; }
+		.modelGallery li { float: left; width: 96px; padding: 0.4em; margin: 0 0.4em 0.4em 0; text-align: center; }
+		.modelGallery li h5 { margin: 0 0 0.4em; cursor: move; }
+		.modelGallery li a { float: right; }
+		.modelGallery li a.ui-icon-zoomin { float: left; }
+		.modelGallery li img { width: 100%; cursor: move; }
+
+		
+		.newModelGroup { float: left; width: 100%;height:60%; overflow: auto; background-color:0xf5f5f5}
+		.newModelGroup.custom-state-active { background: #eee; }
+		.newModelGroup li { float: left; width: 96px; padding: 0.4em; margin: 0 0.4em 0.4em 0; text-align: center; }
+		.newModelGroup li h5 { margin: 0 0 0.4em; cursor: move; }
+		.newModelGroup li a { float: right; }
+		.newModelGroup li a.ui-icon-zoomin { float: left; }
+		
+	
+
+	
+		.newModelGallery li img { width: 100%; cursor: move; }
+		.group { float: right; width: 100px; height:  100px; }
+		.group h4 { line-height: 16px; margin: 0 0 0.4em; }
+		.group h4 .ui-icon { float: left; }
+		.group .newModelGallery h5 { display: none; }
+		#groupGallery { list-style-type: none; margin: 0; padding: 0; width: 100%; }
+		#groupGallery div { margin: 3px 3px 3px 0; padding: 1px; float: left; width:500px; height:200px; font-size: 4em; text-align: center; }
+		#groupGallery img { width: 100px;}
+		
+		
+		#singleGroup { float: right; width: 32%; min-height: 500px; padding: 1%; }
+
+	</style>
+	<script>
+	var groupAmount = 0;
+	
+	var colorPalette = [0x1abc9c,0x2ecc71,0x3498db,0x9b59b6,0x34495e,0x16a085,0x27ae60,0x8e44ad,0x2c3e50,0x0099FF,0x0033CC,0xFF3399];
+	var colorPaletteStr = ['#1abc9c','#2ecc71','#3498db','#9b59b6','#34495e','#16a085','#27ae60','#8e44ad','#2c3e50','#2c3e50','#0033CC','#FF3399'];
+	var colorPaletteStrRGB = ["rgba(153,180,51,0.5)", "rgba(0,163,0,0.5)", "rgba(30,113,69,0.5)","rgba(255,0,151,0.5)","rgba(159,0,167,0.5)","rgba(126,56,120,0.5)","rgba(96,60,186,0.5)","rgba(29,29,29,0.5)","rgba(45,137,239,0.5)","rgba(43,87,151,0.5)"]
+	
+	var scene;
+	var camera;
+	var renderer;
+	var model;
+	var newModels = {};
+	var newModelAmount = 0;
+	var groupedNewModels = 0;
+	var controls;
+	$(function() {
+
+		// there's the newModelGallery and the trash
+		var $newModelGallery = $( "#newModelGallery" ),
+		  $trash = $( "#trash" );
+
+
+
+		// let the trash be droppable, accepting the newModelGallery items
+		$trash.droppable({
+		  accept: "#newModelGallery > li",
+		  activeClass: "ui-state-highlight",
+		  drop: function( event, ui ) {
+			deleteImage( ui.draggable );
+		  }
+		});
+
+		// let the newModelGallery be droppable as well, accepting items from the trash
+		$newModelGallery.droppable({
+		  accept: "#trash li",
+		  activeClass: "custom-state-active",
+		  drop: function( event, ui ) {
+			recycleImage( ui.draggable );
+		  }
+		});
+
+		// image deletion function
+		var recycle_icon = "<a href='link/to/recycle/script/when/we/have/js/off' title='Recycle this image' class='ui-icon ui-icon-refresh'>Recycle image</a>";
+		function deleteImage( $item ) {
+		  $item.fadeOut(function() {
+			var $list = $( "ul", $trash ).length ?
+			  $( "ul", $trash ) :
+			  $( "<ul class='newModelGallery ui-helper-reset'/>" ).appendTo( $trash );
+
+			$item.find( "a.ui-icon-trash" ).remove();
+			$item.append( recycle_icon ).appendTo( $list ).fadeIn(function() {
+			  $item
+				.animate({ width: "60px" })
+				.find( "img" )
+				  .animate({ height: "48px" });
+			});
+		  });
+		}
+
+		// image recycle function
+		var trash_icon = "<a href='link/to/trash/script/when/we/have/js/off' title='Delete this image' class='ui-icon ui-icon-trash'>Delete image</a>";
+		function recycleImage( $item ) {
+		  $item.fadeOut(function() {
+			$item
+			  .find( "a.ui-icon-refresh" )
+				.remove()
+			  .end()
+			  .css( "width", "96px")
+			  .append( trash_icon )
+			  .find( "img" )
+				.css( "height", "72px" )
+			  .end()
+			  .appendTo( $newModelGallery )
+			  .fadeIn();
+		  });
+		}
+
+		// image preview function, demonstrating the ui.dialog used as a modal window
+		function viewLargerImage( $link ) {
+		  var src = $link.attr( "href" ),
+			title = $link.siblings( "img" ).attr( "alt" ),
+			$modal = $( "img[src$='" + src + "']" );
+
+		  if ( $modal.length ) {
+			$modal.dialog( "open" );
+		  } else {
+			var img = $( "<img alt='" + title + "' width='384' height='288' style='display: none; padding: 8px;' />" )
+			  .attr( "src", src ).appendTo( "body" );
+			setTimeout(function() {
+			  img.dialog({
+				title: title,
+				width: 400,
+				modal: true
+			  });
+			}, 1 );
+		  }
+		}
+
+		function dropImage( $item, target ) {
+			target.modelAmount++;
+
+		  //$item.fadeOut(function() {
+			var $list = $( "ul", target ).length ?
+			  $( "ul", target ) :
+			  $( "<ul class='modelGallery ui-helper-reset'/>" ).appendTo( target );
+			$item[0].style.backgroundColor = colorPaletteStrRGB[target.id];
+			//$item.find( "a.ui-icon-trash" ).remove();
+			
+			/*$item.append( recycle_icon ).appendTo( $list ).fadeIn(function() {
+			  $item
+				.animate({ width: "100px" })
+				.find( "img" )
+				  .animate({ height: "100px" });
+				if(target.modelAmount > 2) {
+					$item[0].style.display = "none";
+				}
+			});*/
+			$item.appendTo( $list );
+			$item[0].style.backgroundColor = "rgba(1,1,1,0)"
+			if(target.modelAmount > 2) {
+				$item[0].style.display = "none";
+			}
+			else {
+				$item[0].style.display = "";
+			}
+		  //});
+		}
+		
+		
+		// resolve the icons behavior with event delegation
+		$( "ul.newModelGallery > li" ).click(function( event ) {
+		  var $item = $( this ),
+			$target = $( event.target );
+
+		  if ( $target.is( "group" ) ) {
+			//deleteImage( $item );
+		  } else if ( $target.is( "a.ui-icon-zoomin" ) ) {
+			viewLargerImage( $target );
+		  } else if ( $target.is( "a.ui-icon-refresh" ) ) {
+			recycleImage( $item );
+		  }
+
+		  return false;
+		});
+		
+		var socket = io.connect();
+		socket.on('connect', function(){ 
+			console.log('Connected');
+			this.emit('init', 1);
+		});
+		
+		
+		socket.on('setNewModels', function(data) {
+			var temp = data.split("\n\n");
+			for(var i = 0; i < temp.length-1; i++) {
+				groupedNewModels++;
+				var strs = temp[i].split(" ");
+				newModels[strs[1]].groupId = strs[0];
+				newModels[strs[1]].style.backgroundColor = colorPaletteStrRGB[strs[0]];
+				//$("#" + strs[1])[0].groupId = strs[0];
+				//$("#" + strs[1])[0].style.backgroundColor = colorPaletteStrRGB[strs[0]];
+			}
+			if(groupedNewModels == newModelAmount) {
+				var groups = {};
+				groupedNewModels = 0;
+				for(var i in newModels) {
+					if(groups.hasOwnProperty(newModels[i].groupId)) {
+						groups[newModels[i].groupId].push(newModels[i]);
+					}
+					else {
+						groups[newModels[i].groupId] = new Array();
+						groups[newModels[i].groupId].push(newModels[i]);
+					}
+				}
+				for(var i in groups) {
+					var tempdiv = document.createElement("div");
+					tempdiv.className = "newmodelgroup ui-widget-content ui-state-default";
+					tempdiv.id = "newModelGroup_" + i;
+					
+					$( "#newModelGallery" )[0].appendChild(tempdiv);
+					for(var j in groups[i]) {
+						tempdiv.appendChild(groups[i][j]);
+						$( "li", tempdiv ).draggable({
+							cancel: "a.ui-icon", // clicking an icon won't initiate dragging
+							revert: "invalid", // when not dropped, the item will revert back to its initial position
+							containment: "document",
+							helper: "clone",
+							cursor: "move"
+						});
+					}
+				}
+				$( "div", $( "#newModelGallery" ) ).draggable({
+					cancel: "a.ui-icon", // clicking an icon won't initiate dragging
+					revert: "invalid", // when not dropped, the item will revert back to its initial position
+					containment: "document",
+					helper: "clone",
+					cursor: "move"
+				});
+			}
+		});
+		var fileInput = document.createElement( 'input' );
+		fileInput.type = 'file';
+		fileInput.accept = '.stl';
+		fileInput.multiple = true;
+		fileInput.addEventListener( 'change', function ( event ) {
+			//if(fileInput.files.length == 0) return;
+
+			for(var name in newModels){
+				socket.emit('doGroup', {groupId:newModels[name].groupId, name:name});
+				dropImage( $("#"+name), $("#"+newModels[name].groupId)[0] );
+			}
+			
+			while ($("#newModelGallery")[0].firstChild) {
+				$("#newModelGallery")[0].removeChild($("#newModelGallery")[0].firstChild);
+			}
+			newModels = {};
+			newModelAmount = 0;
+			
+			for(var i = 0; i < fileInput.files.length; i++) {
+				var templi = document.createElement("li"); 
+				templi.className = "ui-widget-content ui-corner-tr";
+				var tempimg = document.createElement("img");
+				var tempString = fileInput.files[ i ].name;
+				
+				tempString = tempString.split(".");
+				templi.name = tempString[0];
+				templi.id = tempString[0];
+				newModels[templi.name] = templi;
+				newModelAmount++;
+				
+					
+				if(groupAmount > 1) {
+					socket.emit('addModel', tempString[0]);
+				}
+				tempString = "images/" + tempString[0] + ".png";
+				tempimg.src = tempString;
+				templi.appendChild(tempimg);
+				templi.onclick = function(event){
+					event.cancelBubble = true;
+					
+					var fileName = event.currentTarget.name + ".stl";
+					var loader=new THREE.STLLoader();
+					
+					loader.load('./models/' + fileName, function ( geometry ) {
+						scene.remove( model );
+						var material = new THREE.MeshLambertMaterial({ ambient: 0xFBB917,color: 0x999999 });
+						var mesh = new THREE.Mesh(geometry, material);
+						model = mesh;
+						mesh.scale.set( 50, 50, 50 );
+						mesh.position.setY(0);
+						scene.add( mesh );
+						renderer.render(scene, camera);
+					});
+				};
+				//$newModelGallery[0].appendChild(templi);
+			}
+			if(groupAmount == 1) {
+				var tempStr = newModelAmount + " ";
+				for(var i in newModels) {
+					tempStr += i + " ";
+				}
+				socket.emit('doCluster', tempStr);
+			}
+			
+			
+			$( "li", $newModelGallery ).draggable({
+				cancel: "a.ui-icon", // clicking an icon won't initiate dragging
+				revert: "invalid", // when not dropped, the item will revert back to its initial position
+				containment: "document",
+				helper: "clone",
+				cursor: "move"
+			});
+		} );
+		$("#BtnImport").click(function(){
+			fileInput.click();
+		});
+		
+		$( "#groupGallery" ).sortable();
+		$( "#groupGallery" ).disableSelection();
+		var createGroup = function() {
+			var tempdiv = document.createElement("div");
+			$( "#groupGallery" )[0].appendChild(tempdiv);
+			tempdiv.id = groupAmount;
+			tempdiv.className = "group ui-widget-content ui-state-default";
+			tempdiv.used = false;
+			tempdiv.modelAmount = 0;
+			tempdiv.onclick = function() {
+				console.log("aaaasss");
+
+				function show(div) {
+					var Idiv = div.cloneNode(true);;
+					Idiv.id = "singleGroup";
+					//Idiv.className = "";
+					Idiv.style.position = "absolute";
+					Idiv.style.backgroundColor = colorPaletteStrRGB[tempdiv.id];
+					Idiv.style.zIndex = "501";
+					for(var i = 0; i < Idiv.childNodes[0].childNodes.length; i++) {
+						Idiv.childNodes[0].childNodes[i].style.display = "inline-block";
+					}
+					document.body.appendChild(Idiv);
+					
+
+					
+					//Idiv.style.display="block";
+					//以下部分要将弹出层居中显示
+					Idiv.style.left=(document.documentElement.clientWidth-Idiv.clientWidth)/2+document.documentElement.scrollLeft+"px";
+					Idiv.style.top=(document.documentElement.clientHeight-Idiv.clientHeight)/2+document.documentElement.scrollTop-50+"px";
+					//以下部分使整个页面至灰不可点击
+					var procbg = document.createElement("div"); //首先创建一个div
+					procbg.setAttribute("id","mybg"); //定义该div的id
+					procbg.style.background = "#000000";
+					procbg.style.width = "100%";
+					procbg.style.height = "100%";
+					procbg.style.position = "fixed";
+					procbg.style.top = "0";
+					procbg.style.left = "0";
+					procbg.style.zIndex = "500";
+					procbg.style.opacity = "0.6";
+					procbg.style.filter = "Alpha(opacity=70)";
+					//以上部分也可以用csstext代替
+					// procbg.style.cssText="background:#000000;width:100%;height:100%;position:fixed;top:0;left:0;zIndex:500;opacity:0.6;filter:Alpha(opacity=70);";
+					//背景层加入页面
+					document.body.appendChild(procbg);
+					document.body.style.overflow = "hidden"; //取消滚动条
+					//以下部分实现弹出层的拖拽效果
+					var posX;
+					var posY;
+					Idiv.onmousedown=function(e)
+					{
+					if(!e) e = window.event; //IE
+					posX = e.clientX - parseInt(Idiv.style.left);
+					posY = e.clientY - parseInt(Idiv.style.top);
+					document.onmousemove = mousemove;
+					}
+					document.onmouseup = function()
+					{
+					document.onmousemove = null;
+					}
+					function mousemove(ev)
+					{
+					if(ev==null) ev = window.event;//IE
+					Idiv.style.left = (ev.clientX - posX) + "px";
+					Idiv.style.top = (ev.clientY - posY) + "px";
+					}
+					
+					Idiv.onclick = function() {
+						Idiv.style.display="none";
+						document.body.style.overflow = "auto"; //恢复页面滚动条
+						var body = document.getElementsByTagName("body");
+						var mybg = document.getElementById("mybg");
+						body[0].removeChild(mybg);
+						body[0].removeChild(this);
+					}
+				}
+				show(tempdiv);
+				
+				
+			}
+			$( "#"+groupAmount ).droppable({
+			  //accept: "#newModelGallery > li",
+			  activeClass: "ui-state-highlight",
+			  drop: function( event, ui ) {
+				var temp = ui.draggable[0].id.split("_");
+				if(temp[0] == "newModelGroup") {
+					while(ui.draggable[0].childNodes.length > 0) {
+						socket.emit('doGroup', {groupId:event.target.id, name:ui.draggable[0].childNodes[0].name});
+						delete newModels[ui.draggable[0].childNodes[0].name];
+						dropImage( $("#"+ui.draggable[0].childNodes[0].name), event.target);
+
+						if(event.target.used == false) {
+							event.target.used = true;
+							event.target.style.backgroundColor = colorPaletteStrRGB[event.target.id];
+							socket.emit('addGroup', event.target.id);
+							createGroup();
+						}
+
+					}
+
+					$("#newModelGallery")[0].removeChild($("#"+ui.draggable[0].id)[0]);
+				}
+				else {
+					socket.emit('doGroup', {groupId:event.target.id, name:ui.draggable.context.name});
+					dropImage( ui.draggable, event.target);
+
+					delete newModels[ui.draggable.context.name];
+					
+					
+					//if(event.target.modelAmount >= 2) {
+					//	event.target.childNodes[event.target.childNodes.length-1].style.display = "none";
+					//}
+					//event.target.modelAmount++;
+					if(event.target.used == false) {
+						event.target.used = true;
+						event.target.style.backgroundColor = colorPaletteStrRGB[event.target.id];
+						socket.emit('addGroup', event.target.id);
+						createGroup();
+					}
+				  }
+				  
+			  }
+			});
+
+			groupAmount++;
+		};
+		createGroup();
+		
+		scene = new THREE.Scene();
+		camera = new THREE.PerspectiveCamera( 45,1, 1, 1000 );
+		camera.position.set(0,60,0);
+		camera.lookAt(new THREE.Vector3(0,0,0));
+		//camera.rotation.z = Math.PI;
+		camera.up.y = -1;
+		renderer = new THREE.WebGLRenderer({antialias:true});
+		renderer.setSize( $("#modelCanvas")[0].offsetWidth, $("#modelCanvas")[0].offsetHeight );
+		$("#modelCanvas")[0].appendChild( renderer.domElement );
+
+		controls = new THREE.OrbitControls( camera, renderer.domElement);
+		
+		
+		scene.add(new THREE.AmbientLight(0x736F6E));
+		var directionalLight=new THREE.DirectionalLight(0xffffff, 1);
+		directionalLight.position=camera.position;
+		scene.add(directionalLight);
+		renderer.setClearColor(0xf5f5f5, 1);
+		renderer.render(scene, camera);
+		render();
+
+		function render() {
+
+				requestAnimationFrame( render );
+
+				renderer.render( scene, camera );
+
+		}
+	
+		
+		var currentFolder = 0;
+		
+		//js兼容处理键盘响应
+        document.onkeydown = function (event) {
+            var e = event || window.event || arguments.callee.caller.arguments[0];
+            if (e && e.keyCode == 13) { // Enter
+                fileInput.click();
+
+            }
+        }
+	});
+	</script>
+	
+	<body style="height:100%; margin:0; padding:0" class="ui-widget ui-helper-clearfix">
+		<div style="float:left; width:400px; height:100%;">
+			<div id="BtnImport" style="height:50px;background-color:#1ba1e2;text-align:center;font-family:Microsoft YaHei;">Import New Shapes</div>
+			<div style="height:50px;background-color:#1ba1e2;text-align:center;font-family:Microsoft YaHei;">Imported Shapes</div>
+			<div id="newModelGallery" class="newModelGallery ui-helper-reset ui-helper-clearfix">
+			</div>
+
+			<div id="modelCanvas" style="position:absolute;bottom:0;height:35%;width:400px; background-color:#00f">
+				<div style="height:50px;background-color:#1ba1e2;text-align:center;font-family:Microsoft YaHei;">Show a Shape in 3D</div>
+			</div>
+		</div>
+
+		<div style="margin-left:400px;height:100%; background-color:#eee">
+			<div id="groupGallery">
+			</div>
+		</div>
+		
+	</body>
+</html>

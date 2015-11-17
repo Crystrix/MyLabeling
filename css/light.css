@@ -1,0 +1,332 @@
+﻿.Outliner {
+	color: #444;
+	background: #fff;
+	padding: 0;
+	width: 100%;
+	height: 140px;
+	font-size: 12px;
+	cursor: default;
+	overflow: auto;
+	outline: none;
+}
+
+	.Outliner .option {
+		padding: 4px;
+		color: #666;
+		white-space: nowrap;
+	}
+
+	.Outliner .option.active {
+		background-color: #f8f8f8;
+	}
+
+input.Number {
+	color: #0080f0!important;
+	font-size: 12px;							/** TODO: Use of !imporant is not ideal **/
+	background-color: transparent!important;	/* For now this is a quick fix a rendering issue due to inherited background */
+	border: 1px solid transparent;
+	padding: 2px;
+	cursor: col-resize;
+}
+
+#viewport {
+	position: absolute;
+	top: 32px;
+	left: 300px;
+	right: 300px;
+	bottom: 32px;
+}
+
+	#viewport #info {
+		text-shadow: 1px 1px 0px rgba(0,0,0,0.25);
+	}
+
+	
+#newModelViewport {
+	position: absolute;
+	top: 5px;
+	right: 10px;
+	bottom: 5px;
+}
+
+	#newModelViewport #info {
+		text-shadow: 1px 1px 0px rgba(0,0,0,0.25);
+	}	
+
+	
+#singleModelViewport { 
+	width: 100;
+	/*position: absolute;
+	top: 5px;
+	right: 10px;
+	bottom: 5px;*/
+}
+
+	#singleModelViewport #info {
+		text-shadow: 1px 1px 0px rgba(0,0,0,0.25);
+	}	
+
+	
+	
+#script {
+	position: absolute;
+	top: 32px;
+	left: 0px;
+	right: 300px;
+	bottom: 32px;
+	opacity: 0.9;
+}
+
+#player {
+	position: absolute;
+	top: 32px;
+	left: 0px;
+	right: 300px;
+	bottom: 32px;
+}
+
+#menubar {
+	position: absolute;
+	width: 100%;
+	height: 32px;
+	background: #eee;
+	padding: 0px;
+	margin: 0px;
+	right: 0px;
+	top: 0px;
+}
+
+	#menubar .menu {
+		float: left;
+		cursor: pointer;
+		padding-right: 8px;
+	}
+
+	#menubar .menu.right {
+		float: right;
+		cursor: auto;
+		text-align: right;
+	}
+
+		#menubar .menu .title {
+			display: inline-block;
+			color: #888;
+			margin: 0px;
+			padding: 8px;
+		}
+
+		#menubar .menu .options {
+			position: absolute;
+			display: none;
+			padding: 5px 0px;
+			background: #eee;
+			width: 150px;
+		}
+
+		#menubar .menu:hover .options {
+			display: block;
+		}
+
+			#menubar .menu .options hr {
+				border-color: #ddd;
+			}
+
+			#menubar .menu .options .option {
+				color: #666;
+				background-color: transparent;
+				padding: 5px 10px;
+				margin: 0px !important;
+			}
+
+				#menubar .menu .options .option:hover {
+					color: #fff;
+					background-color: #08f;
+				}
+
+				#menubar .menu .options .option:active {
+					color: #666;
+					background: transparent;
+				}
+
+#sidebar {
+	position: absolute;
+	right: 0px;
+	top: 32px;
+	bottom: 0px;
+	width: 300px;
+	background: #eee;
+	overflow: auto;
+}
+
+	#sidebar * {
+		vertical-align: middle;
+	}
+
+	#sidebar input,
+	#sidebar textarea,
+	#sidebar select {
+		border: 1px solid transparent;
+		color: #444;
+	}
+
+	#sidebar .Panel {
+		margin-bottom: 10px;
+	}
+
+	#sidebar .Panel.collapsed {
+		margin-bottom: 0px;
+	}
+
+	#sidebar > .Panel {
+		color: #888;
+		padding: 10px;
+		border-top: 1px solid #ccc;
+	}
+	
+#leftsidebar {
+	position: absolute;
+	left: 0px;
+	top: 32px;
+	bottom: 0px;
+	width: 300px;
+	background: #eee;
+	overflow: auto;
+}
+
+	#leftsidebar * {
+		vertical-align: middle;
+	}
+
+	#leftsidebar input,
+	#leftsidebar textarea,
+	#leftsidebar select {
+		border: 1px solid transparent;
+		color: #444;
+	}
+
+	#leftsidebar .Panel {
+		margin-bottom: 10px;
+	}
+
+	#leftsidebar .Panel.collapsed {
+		margin-bottom: 0px;
+	}
+
+	#leftsidebar > .Panel {
+		color: #888;
+		padding: 10px;
+		border-top: 1px solid #ccc;
+	}	
+	
+	
+#rightsidebar {
+	position: absolute;
+	right: 0px;
+	top: 32px;
+	bottom: 0px;
+	width: 300px;
+	background: #eee;
+	overflow: auto;
+}
+
+	#rightsidebar * {
+		vertical-align: middle;
+	}
+
+	#rightsidebar input,
+	#rightsidebar textarea,
+	#rightsidebar select {
+		border: 1px solid transparent;
+		color: #444;
+	}
+
+	#rightsidebar .Panel {
+		margin-bottom: 10px;
+	}
+
+	#rightsidebar .Panel.collapsed {
+		margin-bottom: 0px;
+	}
+
+	#rightsidebar > .Panel {
+		color: #888;
+		padding: 10px;
+		border-top: 1px solid #ccc;
+	}	
+
+#toolbar {
+	position: absolute;
+	left: 300px;
+	right: 300px;
+	bottom: 0px;
+	height: 32px;
+	background: #eee;
+	color: #333;
+}
+
+	#toolbar * {
+		vertical-align: middle;
+	}
+
+	#toolbar .Panel {
+		padding: 4px;
+		color: #888;
+	}
+
+	#toolbar button {
+		margin-right: 6px;
+	}
+
+	
+	
+.middlepanel {
+	position: absolute;
+	left: 305px;
+	top: 32px;
+	bottom: 0px;
+	width: 1000px;
+	background: #eee;
+	overflow: auto;
+}
+	
+	
+.tile {
+	width: 22%;
+	min-width: 245px;
+	color: #FF7270;
+	padding: 10px 30px;
+	text-align: center;
+	margin-top: 15px;
+	margin-left: 5px;
+	margin-right: 30px;
+	background-color: #fff;
+	display: inline-block;
+	vertical-align: top;
+}
+	.tile__name {
+		cursor: move;
+		padding-bottom: 10px;
+		border-bottom: 1px solid #FF7373;
+	}
+
+	.tile__list {
+		margin-top: 10px;
+	}
+		.tile__list:last-child {
+			margin-right: 0;
+			min-height: 80px;
+		}
+
+		.tile__list canvas {
+			cursor: move;
+			margin: 10px;
+			/*border-radius: 100%;*/
+			width:100px;
+			height:100px;
+		}
+		.tile__list div {
+			width:100px;
+			height:100px;
+		}	
+	
+	
