@@ -1,0 +1,18 @@
+extends layout
+block bcontent
+	include narbar.jade
+	div.jumbotron
+		div.container
+			- if (!user)
+				h1 Welcome to the Annotation System
+				p Please Register or Login
+				p
+					a(class='btn btn-primary btn-lg' href='/login' role="button") 登录
+					a(class='btn btn-lg' href='/reg' role="button") 注册
+			- else
+				include ./say.jade
+				include ./annotation.html
+	
+	div.container
+		include ./posts.jade
+		include footer.jade
