@@ -5,5 +5,5 @@ var settings = require('../settings');
 //module.exports = new Db(settings.db, new Server(settings.host, Connection.DEFAULT_PORT, {}), {safe: true});
 
 var mongoose = require('mongoose');
-mongoose.connect("mongodb://localhost/MyLabeling");
+mongoose.connect("mongodb://114.212.85.53/MyLabeling");
 module.exports = mongoose;

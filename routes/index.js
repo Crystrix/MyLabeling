@@ -2,6 +2,8 @@ var express = require('express');
 var app = express();
 var router = express.Router();
 var crypto = require('crypto');
+var http = require('http').Server(app);
+var io = require('socket.io')(http);
 var User = require('../models/user.js');
 var Post = require("../models/post.js");
 /* GET home page. */
@@ -12,7 +14,7 @@ router.get('/', function(req, res) {
 		posts = [];
 	}
 	res.render('index', {
-		title: 'microblog',
+		title: 'Annotation System',
 		posts: posts,
 		user : req.session.user,
             success : req.flash('success').toString(),
@@ -28,27 +30,27 @@ router.get('/blog', function(req, res) {
 		posts = [];
 	}
 	res.render('index', {
-		title: '微博首页',
+		title: 'Index',
 		posts: posts,
 		user : req.session.user,
             success : req.flash('success').toString(),
             error : req.flash('error').toString()
 	});
   });
-  //res.render('index', { title: '首页' });
+
 });
 
 router.get("/reg", checkNotLogin);
 router.get("/reg",function(req,res) {
   res.render("reg",{
-    title : "用户注册"
+    title : "Resigster"
   });
 });
 
 router.get("/login", checkNotLogin);
 router.get("/login",function(req,res) {
   res.render("login",{
-    title:"用户登录",
+    title:"Login",
   });
 });
 
@@ -56,7 +58,7 @@ router.get("/logout", checkLogin);
 router.get("/logout",function(req,res) {
 	req.session.user = null;
 	req.flash('success', '退出成功');
-	res.redirect('/blog');
+	res.redirect('/');
 });
 
 //router.get("/user", function(req,res){

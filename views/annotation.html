@@ -10,6 +10,8 @@
 		
 		<script src="js/jquery/jquery-2.1.3.min.js"></script>
 		<script src="js/jquery/jquery-ui.js"></script>
+		<script src="js/socket.io-1.3.7.js"></script>
+		<script src="js/three.js"></script>
 	
 		
 		<link rel="stylesheet" href="css/jquery-ui.css">
@@ -23,29 +25,9 @@
 		.newModelGallery li h5 { margin: 0 0 0.4em; cursor: move; }
 		.newModelGallery li a { float: right; }
 		.newModelGallery li a.ui-icon-zoomin { float: left; }
-		.newModelGallery li img { width: 100%; cursor: move; }
+		.newModelGallery li img { width: 20%; cursor: move; }
 		
-		
-		#modelGallery { float: left; width: 100%;height:60%; overflow: auto; background-color:0xf5f5f5}
-		.modelGallery.custom-state-active { background: #eee; }
-		.modelGallery li { float: left; width: 96px; padding: 0.4em; margin: 0 0.4em 0.4em 0; text-align: center; }
-		.modelGallery li h5 { margin: 0 0 0.4em; cursor: move; }
-		.modelGallery li a { float: right; }
-		.modelGallery li a.ui-icon-zoomin { float: left; }
-		.modelGallery li img { width: 100%; cursor: move; }
 
-		
-		.newModelGroup { float: left; width: 100%;height:60%; overflow: auto; background-color:0xf5f5f5}
-		.newModelGroup.custom-state-active { background: #eee; }
-		.newModelGroup li { float: left; width: 96px; padding: 0.4em; margin: 0 0.4em 0.4em 0; text-align: center; }
-		.newModelGroup li h5 { margin: 0 0 0.4em; cursor: move; }
-		.newModelGroup li a { float: right; }
-		.newModelGroup li a.ui-icon-zoomin { float: left; }
-		
-	
-
-	
-		.newModelGallery li img { width: 100%; cursor: move; }
 		.group { float: right; width: 100px; height:  100px; }
 		.group h4 { line-height: 16px; margin: 0 0 0.4em; }
 		.group h4 .ui-icon { float: left; }
@@ -59,6 +41,7 @@
 
 	</style>
 	<script>
+	var socket = io.connect('ws://114.212.85.53:3000');
 	var groupAmount = 0;
 	
 	var colorPalette = [0x1abc9c,0x2ecc71,0x3498db,0x9b59b6,0x34495e,0x16a085,0x27ae60,0x8e44ad,0x2c3e50,0x0099FF,0x0033CC,0xFF3399];
@@ -74,9 +57,15 @@
 	var groupedNewModels = 0;
 	var controls;
 	$(function() {
-
+					$( "li", $newModelGallery ).draggable({
+							cancel: "a.ui-icon", // clicking an icon won't initiate dragging
+							revert: "invalid", // when not dropped, the item will revert back to its initial position
+							containment: "document",
+							helper: "clone",
+							cursor: "move"
+					});
 		$.ajax({
-			url: 'http://114.212.85.53:3000/init',
+			url: 'http://127.0.0.1:3000/init',
 			// dataType: "jsonp",
 			data: '{"data": "TEST"}',
 			type: 'POST',
@@ -86,9 +75,15 @@
 				$('#lblResponse').html(ret.msg);
 				console.log('Success: ')
 				for(var i = 0; i < ret.length; i++) {
+					
 					var templi = document.createElement("li"); 
 					templi.className = "ui-widget-content ui-corner-tr";
 					var tempimg = document.createElement("img");
+					tempimg.onmousedown = function(event) {
+						//event.preventDefault();
+						//event.cancelBubble = true;
+					}
+
 					var thumbPath = ret[ i ].thumbPath;
 					var modelName = ret[ i ].modelName;
 					templi.name = modelName;
@@ -102,13 +97,14 @@
 					}
 					tempimg.src = thumbPath;
 					templi.appendChild(tempimg);
+					
 					templi.onclick = function(event){
 						event.cancelBubble = true;
 						
 						var fileName = event.currentTarget.name + ".stl";
 						var loader=new THREE.STLLoader();
 						
-						loader.load('./models/' + fileName, function ( geometry ) {
+						/*loader.load('./models/' + fileName, function ( geometry ) {
 							scene.remove( model );
 							var material = new THREE.MeshLambertMaterial({ ambient: 0xFBB917,color: 0x999999 });
 							var mesh = new THREE.Mesh(geometry, material);
@@ -117,9 +113,16 @@
 							mesh.position.setY(0);
 							scene.add( mesh );
 							renderer.render(scene, camera);
-						});
+						});*/
 					};
 					$newModelGallery[0].appendChild(templi);
+					$( "li", $newModelGallery ).draggable({
+							cancel: "a.ui-icon", // clicking an icon won't initiate dragging
+							revert: "invalid", // when not dropped, the item will revert back to its initial position
+							containment: "document",
+							helper: "clone",
+							cursor: "move"
+					});
 				}
 			},
 			error: function (xhr, status, error) {
@@ -153,7 +156,13 @@
 			recycleImage( ui.draggable );
 		  }
 		});
-
+		$( "li", $newModelGallery ).draggable({
+				cancel: "a.ui-icon", // clicking an icon won't initiate dragging
+				revert: "invalid", // when not dropped, the item will revert back to its initial position
+				containment: "document",
+				helper: "clone",
+				cursor: "move"
+		});
 		// image deletion function
 		var recycle_icon = "<a href='link/to/recycle/script/when/we/have/js/off' title='Recycle this image' class='ui-icon ui-icon-refresh'>Recycle image</a>";
 		function deleteImage( $item ) {
@@ -351,7 +360,7 @@
 					var fileName = event.currentTarget.name + ".stl";
 					var loader=new THREE.STLLoader();
 					
-					loader.load('./models/' + fileName, function ( geometry ) {
+					/*loader.load('./models/' + fileName, function ( geometry ) {
 						scene.remove( model );
 						var material = new THREE.MeshLambertMaterial({ ambient: 0xFBB917,color: 0x999999 });
 						var mesh = new THREE.Mesh(geometry, material);
@@ -360,7 +369,7 @@
 						mesh.position.setY(0);
 						scene.add( mesh );
 						renderer.render(scene, camera);
-					});
+					});*/
 				};
 				//$newModelGallery[0].appendChild(templi);
 			}
