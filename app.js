@@ -43,7 +43,7 @@ app.use(session({
 
 app.use('/', routes);
 app.use(function(req, res, next){
-  console.log("app.usr local");
+
   res.locals.user = req.session.user;
   res.locals.post = req.session.post;
   var error = req.flash('error');
@@ -113,7 +113,7 @@ app.post("/login", function (req, res) {
 app.post("/init", function (req, res) {
 		console.log('init');
         if (req.session.user) {
-			 console.log(modelListString);  
+		
 			res.send(modelListString); 
         } else {
             res.redirect('/');
@@ -166,7 +166,6 @@ fs.readdir("./public/models/", function (err, files) {//读取文件夹下文件
 					var type = temp[temp.length-1];
 					if(type == "jpg" || type == 'png') {
 						tmpResult["shapeThumbPath"] = "/models/"+filename+"/"+subfiles[i]; 
-						console.log(tmpResult["shapeThumbPath"]);
 						break;
 					}
 				}

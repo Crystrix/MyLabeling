@@ -17,7 +17,10 @@ var ClassificationSchema = new mongoose.Schema({
 	  ref: 'Category' }],
 	shapesId: [{ 
 	  type: mongoose.Schema.ObjectId, 
-	  ref: 'Shape' }]  
+	  ref: 'Shape' }],
+	annotationsId: [{ 
+	  type: mongoose.Schema.ObjectId, 
+	  ref: 'Annotation' }]  
 });
 
 var ClassificationModel = mongoose.model('Classification', ClassificationSchema); 

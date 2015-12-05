@@ -9,7 +9,7 @@ var Post = require("../models/post.js");
 var Classification = require("../models/classification.js");
 var Category = require("../models/category.js");
 var Shape = require("../models/shape.js");
-
+var Annotation = require("../models/annotation.js");
 /* GET home page. */
 
 router.get('/', function(req, res) {
@@ -94,8 +94,6 @@ router.post("/login",function(req,res) {
 
 router.post("/reg", checkNotLogin);
 router.post("/reg", function(req, res) {
-  console.log('password:' + req.body['password']);
-  console.log('password-repeat:' + req.body['password-repeat']);
   if(req.body['password-repeat'] != req.body['password']){
     req.flash('error', '两次输入的密码不一致');
     return res.redirect('/reg');
@@ -109,10 +107,8 @@ router.post("/reg", function(req, res) {
   });
   //检查用户名是否已经存在
   User.get(newUser.username, function(err, user) {
-	console.log('111');
     if (user) {
       err = 'Username already exists.';
-	  console.log('222');
 
     }
     if (err) {
@@ -258,7 +254,7 @@ router.post("/createcategory", function (req, res) {
 			categoryName: req.body['categoryName'], 
 			classificationId: req.body['classificationId']
 		});
-		category.save(function(err, classification) {
+		category.save(function(err, category) {
 			if (err) {
 			  req.flash('error', err);
 			  return;
@@ -273,9 +269,7 @@ router.post("/createcategory", function (req, res) {
 
 router.post("/getclassificationshapes", function (req, res) {
 	if (req.session.user) {
-		console.log(req.body['currentClassificationId']);
 		var shapeIdList = Classification.getShapeListById(req.body['currentClassificationId'], function(err, shapeIdList) {
-			console.log(shapeIdList[0]['shapesId']);
 			var shapeList = Shape.findByShapeId(shapeIdList[0]['shapesId'], function(err, shapeList){
 				res.send(shapeList);
 			});
@@ -285,5 +279,38 @@ router.post("/getclassificationshapes", function (req, res) {
 		res.redirect('/');
 	}
 });
+
+
+router.post("/getclassificationcategories", function (req, res) {
+	if (req.session.user) {
+		var categoryList = Category.getAllByClassificationId(req.body['currentClassificationId'], function(err, categoryList) {
+				res.send(categoryList);
+		});	
+	} 
+	else {
+		res.redirect('/');
+	}
+});
+
+
 	
+router.post("/annotation", function (req, res) {
+	if (req.session.user) {
+		var annotation = new Annotation({
+			shapeId: req.body['shapeId'], 
+			categoryId: req.body['categoryId']
+		});
+		annotation.save(function(err, annotation) {
+			if (err) {
+			  req.flash('error', err);
+			  return;
+			}
+			res.send({_id:annotation._id});
+		});
+	} 
+	else {
+		res.redirect('/reg');
+	}
+});
+		
 module.exports = router;

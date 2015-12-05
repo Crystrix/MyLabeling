@@ -13,7 +13,10 @@ var CategorySchema = new mongoose.Schema({
 	  ref: 'Classification' },
 	shapesId: [{ 
 	  type: mongoose.Schema.ObjectId, 
-	  ref: 'Shape' }]  
+	  ref: 'Shape' }],
+	annotationsId: [{ 
+	  type: mongoose.Schema.ObjectId, 
+	  ref: 'Annotation' }]  
 });
 
 var CategoryModel = mongoose.model('Category', CategorySchema); 
@@ -31,6 +34,19 @@ Category.prototype.save = function save(callback) {
 
 Category.findByCategoryId = function get(categoryId, callback) {
 	ClassificationModel.find({categoryId:categoryId}, function(err, doc){
+		if (err) {
+			return callback(err, null);
+		}
+		if (doc) {
+			callback(err, doc);
+		} else {
+			callback(err, null);
+		}
+	});	
+};
+
+Category.getAllByClassificationId = function get(classificationId, callback) {
+	CategoryModel.find({classificationId:classificationId}, function(err, doc){
 		if (err) {
 			return callback(err, null);
 		}

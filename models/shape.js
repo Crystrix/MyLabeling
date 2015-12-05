@@ -19,7 +19,10 @@ var ShapeSchema = new mongoose.Schema({
 	  ref: 'Classification' }],
 	usersId: [{
 	  type: mongoose.Schema.ObjectId, 
-	  ref: 'User' }]  
+	  ref: 'User' }],
+	annotationsId: [{ 
+	  type: mongoose.Schema.ObjectId, 
+	  ref: 'Annotation' }]  
 });
 
 var ShapeModel = mongoose.model('Shape', ShapeSchema); 

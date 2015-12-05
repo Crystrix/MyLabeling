@@ -65,110 +65,19 @@
 	var $newModelGallery;
 	$(function() {
 		getClassificationList();
-	
-	
-			$('#sidebar').BootSideMenu({side:"left", autoClose:false});
+		$('#sidebar').BootSideMenu({side:"left", autoClose:false});
 
-					$( "li", $newModelGallery ).draggable({
-							cancel: "a.ui-icon", // clicking an icon won't initiate dragging
-							revert: "invalid", // when not dropped, the item will revert back to its initial position
-							containment: "document",
-							helper: "clone",
-							cursor: "move"
-					});
-		$.ajax({
-			url: 'http://114.212.85.53:3000/initaaa',
-			// dataType: "jsonp",
-			data: '{"data": "TEST"}',
-			type: 'POST',
-			jsonpCallback: 'callback', // this is not relevant to the POST anymore
-			success: function (data) {
-				var ret = jQuery.parseJSON(data);
-				$('#lblResponse').html(ret.msg);
-				console.log('Success: ')
-				for(var i = 0; i < ret.length; i++) {
-					
-					var templi = document.createElement("li"); 
-					templi.className = "ui-widget-content ui-corner-tr";
-					var tempimg = document.createElement("img");
-					tempimg.onmousedown = function(event) {
-						//event.preventDefault();
-						//event.cancelBubble = true;
-					}
-
-					var thumbPath = ret[ i ].thumbPath;
-					var modelName = ret[ i ].modelName;
-					templi.name = modelName;
-					templi.id = modelName;
-					newModels[templi.name] = templi;
-					newModelAmount++;
-					
-						
-					if(groupAmount > 1) {
-						//socket.emit('addModel', tempString[0]);
-					}
-					tempimg.src = thumbPath;
-					templi.appendChild(tempimg);
-					
-					templi.onclick = function(event){
-						//event.cancelBubble = true;
-						
-						var fileName = event.currentTarget.name + ".stl";
-						var loader=new THREE.STLLoader();
-						
-						/*loader.load('./models/' + fileName, function ( geometry ) {
-							scene.remove( model );
-							var material = new THREE.MeshLambertMaterial({ ambient: 0xFBB917,color: 0x999999 });
-							var mesh = new THREE.Mesh(geometry, material);
-							model = mesh;
-							mesh.scale.set( 50, 50, 50 );
-							mesh.position.setY(0);
-							scene.add( mesh );
-							renderer.render(scene, camera);
-						});*/
-					};
-					$newModelGallery[0].appendChild(templi);
-					$( "li", $newModelGallery ).draggable({
-							cancel: "a.ui-icon", // clicking an icon won't initiate dragging
-							revert: "invalid", // when not dropped, the item will revert back to its initial position
-							containment: "document",
-							helper: "clone",
-							cursor: "move"
-					});
-				}
-				
-			},
-			error: function (xhr, status, error) {
-				console.log('Error: ' + error.message);
-				$('#lblResponse').html('Error connecting to the server.');
-			},
+		$( "li", $newModelGallery ).draggable({
+				cancel: "a.ui-icon", // clicking an icon won't initiate dragging
+				revert: "invalid", // when not dropped, the item will revert back to its initial position
+				containment: "document",
+				helper: "clone",
+				cursor: "move"
 		});
-	
-	
-	
 		// there's the newModelGallery and the trash
 		$newModelGallery = $( "#newModelGallery" ),
-		  $trash = $( "#trash" );
-
-
-
-		// let the trash be droppable, accepting the newModelGallery items
-		$trash.droppable({
-		  accept: "#newModelGallery > li",
-		  activeClass: "ui-state-highlight",
-		  drop: function( event, ui ) {
-			deleteImage( ui.draggable );
-		  }
-		});
-
 		// let the newModelGallery be droppable as well, accepting items from the trash
-		$newModelGallery.droppable({
-		  accept: "#trash li",
-		  activeClass: "custom-state-active",
-		  drop: function( event, ui ) {
-			recycleImage( ui.draggable );
-		  }
-		});
+
 		$( "li", $newModelGallery ).draggable({
 				cancel: "a.ui-icon", // clicking an icon won't initiate dragging
 				revert: "invalid", // when not dropped, the item will revert back to its initial position
@@ -177,25 +86,7 @@
 				cursor: "move"
 		});
 		// image deletion function
-		var recycle_icon = "<a href='link/to/recycle/script/when/we/have/js/off' title='Recycle this image' class='ui-icon ui-icon-refresh'>Recycle image</a>";
-		function deleteImage( $item ) {
-		  $item.fadeOut(function() {
-			var $list = $( "ul", $trash ).length ?
-			  $( "ul", $trash ) :
-			  $( "<ul class='newModelGallery ui-helper-reset'/>" ).appendTo( $trash );
 
-			$item.find( "a.ui-icon-trash" ).remove();
-			$item.append( recycle_icon ).appendTo( $list ).fadeIn(function() {
-			  $item
-				.animate({ width: "60px" })
-				.find( "img" )
-				  .animate({ height: "48px" });
-			});
-		  });
-		}
-
-		// image recycle function
-		var trash_icon = "<a href='link/to/trash/script/when/we/have/js/off' title='Delete this image' class='ui-icon ui-icon-trash'>Delete image</a>";
 		function recycleImage( $item ) {
 		  $item.fadeOut(function() {
 			$item
@@ -236,22 +127,10 @@
 		function dropImage( $item, target ) {
 			target.modelAmount++;
 
-		  //$item.fadeOut(function() {
 			var $list = $( "ul", target ).length ?
 			  $( "ul", target ) :
 			  $( "<ul class='modelGallery ui-helper-reset'/>" ).appendTo( target );
 			$item[0].style.backgroundColor = colorPaletteStrRGB[target.id];
-			//$item.find( "a.ui-icon-trash" ).remove();
-			
-			/*$item.append( recycle_icon ).appendTo( $list ).fadeIn(function() {
-			  $item
-				.animate({ width: "100px" })
-				.find( "img" )
-				  .animate({ height: "100px" });
-				if(target.modelAmount > 2) {
-					$item[0].style.display = "none";
-				}
-			});*/
 			$item.appendTo( $list );
 			$item[0].style.backgroundColor = "rgba(1,1,1,0)"
 			if(target.modelAmount > 2) {
@@ -260,7 +139,6 @@
 			else {
 				$item[0].style.display = "";
 			}
-		  //});
 		}
 		
 		
@@ -268,14 +146,6 @@
 		$( "ul.newModelGallery > li" ).click(function( event ) {
 		  var $item = $( this ),
 			$target = $( event.target );
-
-		  if ( $target.is( "group" ) ) {
-			//deleteImage( $item );
-		  } else if ( $target.is( "a.ui-icon-zoomin" ) ) {
-			viewLargerImage( $target );
-		  } else if ( $target.is( "a.ui-icon-refresh" ) ) {
-			recycleImage( $item );
-		  }
 
 		  return false;
 		});
@@ -410,27 +280,7 @@
 		$( "#groupGallery" ).sortable();
 		$( "#groupGallery" ).disableSelection();
 		
-		var doLabeling = function(username,shapeid,categoryname,time) {
-			var data = {username:username,
-						shapeid:shapeid,
-						categoryname:categoryname,
-						time:time};
-			$.ajax({
-			url: 'http://114.212.85.53:3000/label',
-			// dataType: "jsonp",
-			data: data,
-			
-			type: 'POST',
-			jsonpCallback: 'callback', // this is not relevant to the POST anymore
-			success: function (data) {
-			},
-			error: function (xhr, status, error) {
-				console.log('Error: ' + error.message);
-				$('#lblResponse').html('Error connecting to the server.');
-			},
-		});
-		}
-		
+
 		
 		
 
@@ -456,181 +306,7 @@
 		}
 		
 		
-		var inputClicked = false;
-		var inputFocused;
-		var createGroup = function() {
-			var tempdiv = document.createElement("div");
-			$( "#groupGallery" )[0].appendChild(tempdiv);
 
-			var tempinput = document.createElement("input");
-			tempinput.ondblclick = function(event) {
-				event.cancelBubble = true;
-			}
-			tempinput = $( "<input class='a' id='test' readonly='readonly' value='Click'  type='text' style = 'width:90%'/>" ).appendTo( tempdiv );
-			//$( "<input class='a' id='test' readonly='readonly' value='Click'  type='text' style = 'width:90%'/>" ).appendTo( tempdiv );
-			
-			
-			var categoryAmount = groupAmount + 1;
-			var categoryName = "Category" + categoryAmount;
-			tempdiv.categoryName = categoryName;
-			
-			tempinput[0].value = categoryName;
-			//var textdiv = innerText
-			tempinput[0].ondblclick = function(event) {
-				event.cancelBubble = true;
-				this.readOnly = false;
-				this.className = "b";
-				inputFocused = this;
-			}
-			tempinput[0].onclick = function(event) {
-				event.cancelBubble = true;
-				this.readOnly = false;
-				this.className = "b";
-				inputClicked = true;
-				inputFocused = this;
-			}			
-			tempinput[0].onblur=function(event){
-				event.cancelBubble = true;
-			  this.readOnly = true;
-			  this.className = "a";
-			  inputClicked = false;
-			};
-			tempdiv.id = groupAmount;
-			tempdiv.className = "group ui-widget-content ui-state-default";
-			tempdiv.used = false;
-			tempdiv.modelAmount = 0;
-			
-			tempdiv.onclick = function() {
-				if(inputClicked) {
-					 inputFocused.readOnly = true;
-					 inputFocused.className = "a";
-					 inputClicked = false;
-					return;
-				}
-				function show(div) {
-					var Idiv = div.cloneNode(true);;
-					Idiv.id = "singleGroup";
-					//Idiv.className = "";
-					Idiv.style.position = "absolute";
-					Idiv.style.backgroundColor = colorPaletteStrRGB[tempdiv.id];
-					Idiv.style.zIndex = "501";
-					for(var i = 0; i < Idiv.childNodes[0].childNodes.length; i++) {
-						Idiv.childNodes[0].childNodes[i].style.display = "inline-block";
-					}
-					document.body.appendChild(Idiv);
-					
-
-					
-					//Idiv.style.display="block";
-					//以下部分要将弹出层居中显示
-					Idiv.style.left=(document.documentElement.clientWidth-Idiv.clientWidth)/2+document.documentElement.scrollLeft+"px";
-					Idiv.style.top=(document.documentElement.clientHeight-Idiv.clientHeight)/2+document.documentElement.scrollTop-50+"px";
-					//以下部分使整个页面至灰不可点击
-					var procbg = document.createElement("div"); //首先创建一个div
-					procbg.setAttribute("id","mybg"); //定义该div的id
-					procbg.style.background = "#000000";
-					procbg.style.width = "100%";
-					procbg.style.height = "100%";
-					procbg.style.position = "fixed";
-					procbg.style.top = "0";
-					procbg.style.left = "0";
-					procbg.style.zIndex = "500";
-					procbg.style.opacity = "0.6";
-					procbg.style.filter = "Alpha(opacity=70)";
-					//以上部分也可以用csstext代替
-					// procbg.style.cssText="background:#000000;width:100%;height:100%;position:fixed;top:0;left:0;zIndex:500;opacity:0.6;filter:Alpha(opacity=70);";
-					//背景层加入页面
-					document.body.appendChild(procbg);
-					document.body.style.overflow = "hidden"; //取消滚动条
-					//以下部分实现弹出层的拖拽效果
-					var posX;
-					var posY;
-					Idiv.onmousedown=function(e)
-					{
-					if(!e) e = window.event; //IE
-					posX = e.clientX - parseInt(Idiv.style.left);
-					posY = e.clientY - parseInt(Idiv.style.top);
-					document.onmousemove = mousemove;
-					}
-					document.onmouseup = function()
-					{
-					document.onmousemove = null;
-					}
-					function mousemove(ev)
-					{
-					if(ev==null) ev = window.event;//IE
-					Idiv.style.left = (ev.clientX - posX) + "px";
-					Idiv.style.top = (ev.clientY - posY) + "px";
-					}
-					
-					Idiv.onclick = function() {
-						Idiv.style.display="none";
-						document.body.style.overflow = "auto"; //恢复页面滚动条
-						var body = document.getElementsByTagName("body");
-						var mybg = document.getElementById("mybg");
-						body[0].removeChild(mybg);
-						body[0].removeChild(this);
-					}
-				}
-				show(tempdiv);
-				
-				
-			}
-			$( "#"+groupAmount ).droppable({
-			  //accept: "#newModelGallery > li",
-			  activeClass: "ui-state-highlight",
-			  drop: function( event, ui ) {
-				var temp = ui.draggable[0].id.split("_");
-				
-				
-				
-				if(temp[0] == "newModelGroup") {
-					while(ui.draggable[0].childNodes.length > 0) {
-						socket.emit('doGroup', {groupId:event.target.id, name:ui.draggable[0].childNodes[0].name});
-						delete newModels[ui.draggable[0].childNodes[0].name];
-						dropImage( $("#"+ui.draggable[0].childNodes[0].name), event.target);
-
-						if(event.target.used == false) {
-							event.target.used = true;
-							event.target.style.backgroundColor = colorPaletteStrRGB[event.target.id];
-							socket.emit('addGroup', event.target.id);
-							
-							createGroup();
-							createCategory(event.target.categoryName);
-						}
-
-					}
-
-					$("#newModelGallery")[0].removeChild($("#"+ui.draggable[0].id)[0]);
-				}
-				else {
-					socket.emit('doGroup', {groupId:event.target.id, name:ui.draggable.context.name});
-					dropImage( ui.draggable, event.target);
-
-					delete newModels[ui.draggable.context.name];
-					
-					
-					//if(event.target.modelAmount >= 2) {
-					//	event.target.childNodes[event.target.childNodes.length-1].style.display = "none";
-					//}
-					//event.target.modelAmount++;
-					if(event.target.used == false) {
-						event.target.used = true;
-						event.target.style.backgroundColor = colorPaletteStrRGB[event.target.id];
-						socket.emit('addGroup', event.target.id);
-						createGroup();
-						createCategory(event.target.categoryName);
-					}
-				  }
-				  
-			  }
-			});
-
-			groupAmount++;
-			
-			
-			return categoryName;
-		};
 		createGroup();
 		
 		scene = new THREE.Scene();
@@ -690,6 +366,7 @@
 					if(classificationList.length > 0) {
 						currentClassificationId = data[0]._id;
 						getClassificationShapes();
+						getClassificationCategories();
 					}
 					displayClassificationList();
 				},
@@ -710,6 +387,7 @@
 		}
 		
 		var createClassification = function() {
+			categoryList = new Array();
 			var tempdiv = document.createElement("div"); 
 			tempdiv.className = "list-group";
 			var classificationName = "Classification" + (classificationList.length + 1)
@@ -737,7 +415,7 @@
 			});
 		};
 		
-		var categoryList;
+		var categoryList = new Array();
 		var createCategory = function(categoryName) {
 			var data = {
 				categoryName : categoryName,
@@ -749,10 +427,11 @@
 				type: 'POST',
 				jsonpCallback: 'callback', // this is not relevant to the POST anymore
 				success: function (data) {
-					classificationList.push({
+					categoryList.push({
 						categoryName : categoryName,
-						_id:data
+						_id:data._id
 					});
+					return data._id;
 				},
 				error: function (xhr, status, error) {
 					console.log('Error: ' + error.message);
@@ -760,7 +439,30 @@
 				},
 			});
 		};
-		
+		var createCategoryAndAnnotation = function(categoryName, shapeId, target) {
+			var data = {
+				categoryName : categoryName,
+				classificationId : currentClassificationId
+			};
+			$.ajax({
+				url: 'http://114.212.85.53:3000/createcategory',
+				data: data,
+				type: 'POST',
+				jsonpCallback: 'callback', // this is not relevant to the POST anymore
+				success: function (data) {
+					categoryList.push({
+						categoryName : categoryName,
+						_id:data._id
+					});
+					annotation(data._id, shapeId);
+					target.categoryId = data._id;
+				},
+				error: function (xhr, status, error) {
+					console.log('Error: ' + error.message);
+					$('#lblResponse').html('Error connecting to the server.');
+				},
+			});
+		};
 		
 		var categoryList;
 		var createLabeling = function(categoryId) {
@@ -802,7 +504,7 @@
 					$('#lblResponse').html('Error connecting to the server.');
 				},
 			});
-		}
+		};
 		
 		
 		var displayShapes = function() {
@@ -817,7 +519,7 @@
 				var thumbPath = shapeList[ i ].shapeThumbPath;
 				var shapeName = shapeList[ i ].shapeName;
 				templi.name = shapeName;
-				templi.id = shapeName;
+				templi.id = shapeList[ i ]._id;
 				newModels[templi.name] = templi;
 				newModelAmount++;
 				
@@ -858,6 +560,169 @@
 		}
 		
 		
+		var getClassificationCategories = function() {
+			categoryList = new Array();
+			console.log(currentClassificationId);
+			$.ajax({
+				url: 'http://114.212.85.53:3000/getclassificationcategories',
+				data: {currentClassificationId:currentClassificationId},
+				type: 'POST',
+				jsonpCallback: 'callback', // this is not relevant to the POST anymore
+				success: function (data) {
+					categoryList = data;
+					displayCategories();
+				},
+				error: function (xhr, status, error) {
+					console.log('Error: ' + error.message);
+					$('#lblResponse').html('Error connecting to the server.');
+				},
+			});
+		};
+		
+		var displayCategories = function() {
+			for(var category in categoryList) {
+				createGroup();
+			}
+		};
+		
+		
+		var annotation = function(categoryId, shapeId) {
+			var data = {shapeId:shapeId,
+						categoryId:categoryId};
+			$.ajax({
+			url: 'http://114.212.85.53:3000/annotation',
+			data: data,
+			type: 'POST',
+			jsonpCallback: 'callback', // this is not relevant to the POST anymore
+			success: function (data) {
+			},
+			error: function (xhr, status, error) {
+				console.log('Error: ' + error.message);
+				$('#lblResponse').html('Error connecting to the server.');
+			},
+		});
+		}
+		
+		
+		
+		var inputClicked = false;
+		var inputFocused;
+		var createGroup = function() {
+			var tempdiv = document.createElement("div");
+			$( "#groupGallery" )[0].appendChild(tempdiv);
+
+			var tempinput = document.createElement("input");
+			tempinput.ondblclick = function(event) {
+				event.cancelBubble = true;
+			}
+			tempinput = $( "<input class='a' id='test' readonly='readonly' value='Click'  type='text' style = 'width:90%'/>" ).appendTo( tempdiv );
+			//$( "<input class='a' id='test' readonly='readonly' value='Click'  type='text' style = 'width:90%'/>" ).appendTo( tempdiv );
+			
+			
+			var categoryAmount = groupAmount + 1;
+			var categoryName = "Category" + categoryAmount;
+			tempdiv.categoryName = categoryName;
+			
+			tempinput[0].value = categoryName;
+			//var textdiv = innerText
+			tempinput[0].ondblclick = function(event) {
+				event.cancelBubble = true;
+				this.readOnly = false;
+				this.className = "b";
+				inputFocused = this;
+			}
+			tempinput[0].onclick = function(event) {
+				event.cancelBubble = true;
+				this.readOnly = false;
+				this.className = "b";
+				inputClicked = true;
+				inputFocused = this;
+			}			
+			tempinput[0].onblur=function(event){
+				event.cancelBubble = true;
+			  this.readOnly = true;
+			  this.className = "a";
+			  inputClicked = false;
+			};
+			tempdiv.id = groupAmount;
+			tempdiv.className = "group ui-widget-content ui-state-default";
+			tempdiv.used = false;
+			tempdiv.modelAmount = 0;
+			
+			tempdiv.onclick = function() {
+				if(inputClicked) {
+					 inputFocused.readOnly = true;
+					 inputFocused.className = "a";
+					 inputClicked = false;
+					return;
+				}
+
+				show(tempdiv);
+				
+				
+			}
+			$( "#"+groupAmount ).droppable({
+			  //accept: "#newModelGallery > li",
+			  activeClass: "ui-state-highlight",
+			  drop: function( event, ui ) {
+				var temp = ui.draggable[0].id.split("_");
+				if(temp[0] == "newModelGroup") {
+					while(ui.draggable[0].childNodes.length > 0) {
+						//socket.emit('doGroup', {groupId:event.target.id, name:ui.draggable[0].childNodes[0].name});
+						
+						
+						delete newModels[ui.draggable[0].childNodes[0].name];
+						dropImage( $("#"+ui.draggable[0].childNodes[0].name), event.target);
+
+						if(event.target.used == false) {
+							event.target.used = true;
+							event.target.style.backgroundColor = colorPaletteStrRGB[event.target.id];
+							//socket.emit('addGroup', event.target.id);
+							createGroup();
+							event.target.categoryId = createCategoryAndAnnotation(event.target.categoryName, ui.draggable[0].id, event.target);
+						}
+						else {
+							annotation(event.target.categoryId, ui.draggable[0].id);
+						}
+
+					}
+
+					$("#newModelGallery")[0].removeChild($("#"+ui.draggable[0].id)[0]);
+				}
+				else {
+
+					
+					
+					//if(event.target.modelAmount >= 2) {
+					//	event.target.childNodes[event.target.childNodes.length-1].style.display = "none";
+					//}
+					//event.target.modelAmount++;
+					if(event.target.used == false) {
+						event.target.used = true;
+						event.target.style.backgroundColor = colorPaletteStrRGB[event.target.id];
+						//socket.emit('addGroup', event.target.id);
+						createGroup();
+						createCategoryAndAnnotation(event.target.categoryName, ui.draggable[0].id, event.target);
+						//event.target.categoryId = createCategory(event.target.categoryName);
+					}
+					//socket.emit('doGroup', {groupId:event.target.id, name:ui.draggable.context.name});
+					else {
+						annotation(event.target.categoryId, ui.draggable[0].id);
+					}
+					dropImage( ui.draggable, event.target);
+
+					delete newModels[ui.draggable.context.name];
+				  }
+				  
+			  }
+			});
+
+			groupAmount++;
+			
+			
+			return categoryName;
+		};
+		
 		function showIframe(url,w,h){
 			//添加iframe
 			var if_w = w; 
@@ -888,7 +753,74 @@
 				$("#YuFrame1").remove();
 				$("#YuFrame1Bg").remove();
 			});
-		}
+		};
+		
+		function show(div) {
+			var Idiv = div.cloneNode(true);;
+			Idiv.id = "singleGroup";
+			//Idiv.className = "";
+			Idiv.style.position = "absolute";
+			Idiv.style.backgroundColor = colorPaletteStrRGB[div.id];
+			Idiv.style.zIndex = "501";
+			for(var i = 0; i < Idiv.childNodes[0].childNodes.length; i++) {
+				Idiv.childNodes[0].childNodes[i].style.display = "inline-block";
+			}
+			document.body.appendChild(Idiv);
+			
+
+			
+			//Idiv.style.display="block";
+			//以下部分要将弹出层居中显示
+			Idiv.style.left=(document.documentElement.clientWidth-Idiv.clientWidth)/2+document.documentElement.scrollLeft+"px";
+			Idiv.style.top=(document.documentElement.clientHeight-Idiv.clientHeight)/2+document.documentElement.scrollTop-50+"px";
+			//以下部分使整个页面至灰不可点击
+			var procbg = document.createElement("div"); //首先创建一个div
+			procbg.setAttribute("id","mybg"); //定义该div的id
+			procbg.style.background = "#000000";
+			procbg.style.width = "100%";
+			procbg.style.height = "100%";
+			procbg.style.position = "fixed";
+			procbg.style.top = "0";
+			procbg.style.left = "0";
+			procbg.style.zIndex = "500";
+			procbg.style.opacity = "0.6";
+			procbg.style.filter = "Alpha(opacity=70)";
+			//以上部分也可以用csstext代替
+			// procbg.style.cssText="background:#000000;width:100%;height:100%;position:fixed;top:0;left:0;zIndex:500;opacity:0.6;filter:Alpha(opacity=70);";
+			//背景层加入页面
+			document.body.appendChild(procbg);
+			document.body.style.overflow = "hidden"; //取消滚动条
+			//以下部分实现弹出层的拖拽效果
+			var posX;
+			var posY;
+			Idiv.onmousedown=function(e)
+			{
+			if(!e) e = window.event; //IE
+			posX = e.clientX - parseInt(Idiv.style.left);
+			posY = e.clientY - parseInt(Idiv.style.top);
+			document.onmousemove = mousemove;
+			}
+			document.onmouseup = function()
+			{
+			document.onmousemove = null;
+			}
+			function mousemove(ev)
+			{
+			if(ev==null) ev = window.event;//IE
+			Idiv.style.left = (ev.clientX - posX) + "px";
+			Idiv.style.top = (ev.clientY - posY) + "px";
+			}
+			
+			Idiv.onclick = function() {
+				Idiv.style.display="none";
+				document.body.style.overflow = "auto"; //恢复页面滚动条
+				var body = document.getElementsByTagName("body");
+				var mybg = document.getElementById("mybg");
+				body[0].removeChild(mybg);
+				body[0].removeChild(this);
+			}
+		};
+		
 	</script>
 	
 	<body style="height:100%; margin:0; padding:0" class="ui-widget ui-helper-clearfix">
