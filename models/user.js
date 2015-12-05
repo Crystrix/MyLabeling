@@ -41,3 +41,11 @@ User.get = function get(username, callback) {
 	});
 		
 };
+
+UserSchema.statics = {
+	findUserIdByUsername:function(username, callback){
+		return this
+			.findOne({username:username})
+			.exec(callback)
+	}
+}

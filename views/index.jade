@@ -1,7 +1,11 @@
 extends layout
+link(rel='stylesheet', href='/css/BootSideMenu.css')
+
+
+
 block bcontent
 	include narbar.jade
-	div.jumbotron
+	div.jumbotron(style="margin-left:auto;margin-right:auto;height:80%")
 		div.container
 			- if (!user)
 				h1 Welcome to the Annotation System
@@ -12,7 +16,7 @@ block bcontent
 			- else
 				//include ./say.jade
 				include ./annotation.html
-	
+				include ./sidebar.jade
 	div.container
 		include ./posts.jade
 		include footer.jade

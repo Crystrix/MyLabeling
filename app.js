@@ -9,7 +9,9 @@
 	bodyParser = require('body-parser'),
 	path = require('path'),
 	fs = require('fs'),
-	flash = require('connect-flash');
+	flash = require('connect-flash'),
+	mongoose = require('./models/db'),
+	Shape = require("./models/shape.js");
 //var mongoose = require('mongoose');
 //mongoose.connect("mongodb://localhost/MyLableing");
 
@@ -119,25 +121,81 @@ app.post("/init", function (req, res) {
 
 });
 
-var modelListString;
 
+
+
+app.post("/label", function (req, res) {
+		console.log(req);
+        if (req.session.user) {  
+		
+			res.send("success"); 
+        } else {
+            res.redirect('/');
+        }
+
+});
+
+
+var modelListString;
+var init = true;
+var initShapeDatabase = function(shapeList) {
+	var newShapes = new Array();
+	for(var i = 0; i < shapeList.length; i++) {
+		var newShape = new Shape({
+			shapeName: shapeList[i]["shapeName"],
+			shapePath: shapeList[i]["shapePath"],
+			shapeFormat: shapeList[i]["shapeFormat"],
+			shapeThumbPath: shapeList[i]["shapeThumbPath"]
+		});
+		newShapes.push(newShape);
+	}
+	Shape.create(newShapes, function(err) {});
+}
 
 fs.readdir("./public/models/", function (err, files) {//读取文件夹下文件  
     var count = files.length; 
     var modelList = new Array() ;  
     files.forEach(function (filename) {  
         fs.readFile(filename, function (data) {  
-            var tmpResult={};  
-            tmpResult["modelName"]=filename;  
-            tmpResult["thumbPath"] = "/models/"+filename+"/"+filename+".png";  
-            modelList[count-1]=tmpResult ;  
-            count--;  
-            if (count <= 0) {  
-				modelListString = JSON.stringify(modelList)
-            }  
+			
+			fs.readdir("./public/models/" + filename, function (err, subfiles) {
+				//console.log(subfiles);
+				var tmpResult={}; 
+				for(var i = 0; i < subfiles.length; i++) {
+					var temp = subfiles[i].split('.'); 
+					var type = temp[temp.length-1];
+					if(type == "jpg" || type == 'png') {
+						tmpResult["shapeThumbPath"] = "/models/"+filename+"/"+subfiles[i]; 
+						console.log(tmpResult["shapeThumbPath"]);
+						break;
+					}
+				}
+							
+				 
+				tmpResult["modelName"] = filename;
+				tmpResult["modelPath"] = "/models/"+filename+"/"+filename+".obj";
+				//tmpResult["thumbPath"] = "/models/"+filename+"/"+filename+".png"; 
+				
+				tmpResult["shapeName"] = filename;
+				tmpResult["shapePath"] = "/models/"+filename+"/"+filename;
+				tmpResult["shapeFormat"] = "obj";
+				//tmpResult["shapeThumbPath"] = "/models/"+filename+"/"+filename+".png"; 
+				modelList[count-1]=tmpResult ;  
+				count--;  
+				if (count <= 0) {
+					if(init) {
+						initShapeDatabase(modelList);
+					}
+					modelListString = JSON.stringify(modelList)
+				} 
+				
+			});
+
+			
         });  
     });  
 }); 
+
 
 
 

@@ -6,6 +6,10 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var User = require('../models/user.js');
 var Post = require("../models/post.js");
+var Classification = require("../models/classification.js");
+var Category = require("../models/category.js");
+var Shape = require("../models/shape.js");
+
 /* GET home page. */
 
 router.get('/', function(req, res) {
@@ -176,4 +180,110 @@ router.get("/u/:user",function(req,res) {
 	});
 });
 
+
+router.post("/renamegroup", function (req, res) {
+		var currentUser = req.session.user;
+		var group = new Group(currentUser.name, req.body.post);
+        if (req.session.user) {
+			res.send(modelListString); 
+        } else {
+            res.redirect('/');
+        }
+		newUser.save(function(err) {
+		if (err) {
+		  req.flash('error', err);
+		  return res.redirect('/reg');
+		}
+		});
+	});
+
+	
+
+router.post("/getclassificationlist", function (req, res) {
+	if (req.session.user) {
+		var classificationList = Classification.findByUserId(req.session.user._id, function(err, classificationList) {
+			res.send(classificationList);
+		});	
+	} 
+	else {
+		res.redirect('/');
+	}
+});
+var allAnnotation = true;
+
+router.post("/createclassification", function (req, res) {
+	if (req.session.user) {
+		var classification;
+		if(allAnnotation) {
+			var shapesIdList;
+			Shape.findAllId(function(err, doc) {
+					shapesIdList = doc;
+					classification	= new Classification({
+						classificationName: req.body['classificationName'], 
+						userId: req.session.user._id,
+						shapesId: shapesIdList
+					});
+				classification.save(function(err, classification) {
+				if (err) {
+					  req.flash('error', err);
+					  return;
+					}
+					res.send({_id:classification._id});
+				});		
+			});
+		}
+		else {
+			classification = new Classification({
+			classificationName: req.body['classificationName'], 
+			userId: req.session.user._id,
+			});
+		
+			classification.save(function(err, classification) {
+				if (err) {
+				  req.flash('error', err);
+				  return;
+				}
+				res.send({_id:classification._id});
+			});
+		}
+	} 
+	else {
+		res.redirect('/reg');
+	}
+});
+	
+router.post("/createcategory", function (req, res) {
+	if (req.session.user) {
+		var category = new Category({
+			categoryName: req.body['categoryName'], 
+			classificationId: req.body['classificationId']
+		});
+		category.save(function(err, classification) {
+			if (err) {
+			  req.flash('error', err);
+			  return;
+			}
+			res.send({_id:category._id});
+		});
+	} 
+	else {
+		res.redirect('/reg');
+	}
+});
+
+router.post("/getclassificationshapes", function (req, res) {
+	if (req.session.user) {
+		console.log(req.body['currentClassificationId']);
+		var shapeIdList = Classification.getShapeListById(req.body['currentClassificationId'], function(err, shapeIdList) {
+			console.log(shapeIdList[0]['shapesId']);
+			var shapeList = Shape.findByShapeId(shapeIdList[0]['shapesId'], function(err, shapeList){
+				res.send(shapeList);
+			});
+		});	
+	} 
+	else {
+		res.redirect('/');
+	}
+});
+	
 module.exports = router;
