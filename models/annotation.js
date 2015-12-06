@@ -3,6 +3,7 @@ var mongoose = require('./db');
 function Annotation(annotation) {
 	this.shapeId = annotation.shapeId;
 	this.categoryId = annotation.categoryId;
+	this.classificationId = annotation.classificationId;
 };
 
 var AnnotationSchema = new mongoose.Schema({
@@ -26,8 +27,24 @@ module.exports = Annotation;
 Annotation.prototype.save = function save(callback) {
 	var annotation = new AnnotationModel({
 		shapeId: this.shapeId,
-		categoryId: this.categoryId
+		categoryId: this.categoryId,
+		classificationId: this.classificationId
 	});
 	annotation.save(function(err){callback(err, annotation);});	
 }
+
+Annotation.getClassificationAnnotation = function get(classificationId, shapeId, callback) {
+	AnnotationModel.find({classificationId:classificationId, shapeId:{$in:shapeId}}, function(err, doc){
+		if (err) {
+			return callback(err, null);
+		}
+		if (doc) {
+			callback(err, doc);
+		} else {
+			callback(err, null);
+		}
+	});	
+};
+
+
 

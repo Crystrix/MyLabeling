@@ -12,6 +12,9 @@ var Shape = require("../models/shape.js");
 var Annotation = require("../models/annotation.js");
 /* GET home page. */
 
+
+
+
 router.get('/', function(req, res) {
   Post.get(null, function(err, posts) {
 	if (err) {
@@ -207,9 +210,19 @@ router.post("/getclassificationlist", function (req, res) {
 });
 var allAnnotation = true;
 
+
+var writefile = true;
 router.post("/createclassification", function (req, res) {
 	if (req.session.user) {
 		var classification;
+		if(writefile) {
+			fs.exists(req.seeeion.user.name+'.txt', function( exists ){
+				//var temp = ;
+			}); 
+
+		}
+		
+		
 		if(allAnnotation) {
 			var shapesIdList;
 			Shape.findAllId(function(err, doc) {
@@ -271,7 +284,15 @@ router.post("/getclassificationshapes", function (req, res) {
 	if (req.session.user) {
 		var shapeIdList = Classification.getShapeListById(req.body['currentClassificationId'], function(err, shapeIdList) {
 			var shapeList = Shape.findByShapeId(shapeIdList[0]['shapesId'], function(err, shapeList){
-				res.send(shapeList);
+				
+				var shapeIdList = new Array();
+				for(var i in shapeList) {
+					shapeIdList.push(shapeList[i]._id);
+				}
+				Annotation.getClassificationAnnotation(req.body['currentClassificationId'],shapeIdList, function(err, annotationList){
+				res.send({shapeList:shapeList,annotationList:annotationList});
+				});	
+				
 			});
 		});	
 	} 
@@ -298,8 +319,10 @@ router.post("/annotation", function (req, res) {
 	if (req.session.user) {
 		var annotation = new Annotation({
 			shapeId: req.body['shapeId'], 
-			categoryId: req.body['categoryId']
+			categoryId: req.body['categoryId'],
+			classificationId: req.body['classificationId'],
 		});
+		console.log(req.body);
 		annotation.save(function(err, annotation) {
 			if (err) {
 			  req.flash('error', err);

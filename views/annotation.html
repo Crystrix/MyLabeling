@@ -124,24 +124,6 @@
 		  }
 		}
 
-		function dropImage( $item, target ) {
-			target.modelAmount++;
-
-			var $list = $( "ul", target ).length ?
-			  $( "ul", target ) :
-			  $( "<ul class='modelGallery ui-helper-reset'/>" ).appendTo( target );
-			$item[0].style.backgroundColor = colorPaletteStrRGB[target.id];
-			$item.appendTo( $list );
-			$item[0].style.backgroundColor = "rgba(1,1,1,0)"
-			if(target.modelAmount > 2) {
-				$item[0].style.display = "none";
-			}
-			else {
-				$item[0].style.display = "";
-			}
-		}
-		
-		
 		// resolve the icons behavior with event delegation
 		$( "ul.newModelGallery > li" ).click(function( event ) {
 		  var $item = $( this ),
@@ -209,7 +191,7 @@
 
 			for(var name in newModels){
 				socket.emit('doGroup', {groupId:newModels[name].groupId, name:name});
-				dropImage( $("#"+name), $("#"+newModels[name].groupId)[0] );
+				dropImage( $("#"+name)[0], $("#"+newModels[name].groupId)[0] );
 			}
 			
 			while ($("#newModelGallery")[0].firstChild) {
@@ -307,7 +289,7 @@
 		
 		
 
-		createGroup();
+		//createGroup();
 		
 		scene = new THREE.Scene();
 		camera = new THREE.PerspectiveCamera( 45,1, 1, 1000 );
@@ -365,8 +347,9 @@
 					classificationList = data;
 					if(classificationList.length > 0) {
 						currentClassificationId = data[0]._id;
-						getClassificationShapes();
 						getClassificationCategories();
+						
+						
 					}
 					displayClassificationList();
 				},
@@ -383,7 +366,7 @@
 				tempdiv.className = "list-group";
 				tempdiv.textContent = classificationList[i].classificationName;
 				$('#sidebar-items')[0].appendChild(tempdiv);
-			}	
+			}
 		}
 		
 		var createClassification = function() {
@@ -489,6 +472,7 @@
 		};
 		
 		var shapeList;
+		var annotationList;
 		var getClassificationShapes = function() {
 			$.ajax({
 				url: 'http://114.212.85.53:3000/getclassificationshapes',
@@ -496,7 +480,8 @@
 				type: 'POST',
 				jsonpCallback: 'callback', // this is not relevant to the POST anymore
 				success: function (data) {
-					shapeList = data;
+					shapeList = data.shapeList;
+					annotationList = data.annotationList;
 					displayShapes();
 				},
 				error: function (xhr, status, error) {
@@ -508,54 +493,78 @@
 		
 		
 		var displayShapes = function() {
+			
 			for(var i = 0; i < shapeList.length; i++) {
+				var sign = false;
+				var j;
+				for(j = 0; j < annotationList.length; j++) {
+					if(shapeList[i]._id == annotationList[j].shapeId) {
+						sign = true;
+						break;
+					}
+				}
 				
-				var templi = document.createElement("li"); 
-				templi.className = "ui-widget-content ui-corner-tr";
-				var tempimg = document.createElement("img");
-				templi.onclick = function(event) {
+				{
+					var templi = document.createElement("li"); 
+					templi.className = "ui-widget-content ui-corner-tr";
+					var tempimg = document.createElement("img");
+					templi.onclick = function(event) {
+					}
+
+					var thumbPath = shapeList[ i ].shapeThumbPath;
+					var shapeName = shapeList[ i ].shapeName;
+					templi.name = shapeName;
+					templi.id = shapeList[ i ]._id;
+					newModels[templi.name] = templi;
+					newModelAmount++;
+					
+						
+					if(groupAmount > 1) {
+						//socket.emit('addModel', tempString[0]);
+					}
+					tempimg.src = thumbPath;
+					templi.appendChild(tempimg);
+					
+					templi.onclick = function(event){
+						//event.cancelBubble = true;
+						showIframe("http://shapenet.cs.stanford.edu/view-model?modelId=3dw." + templi.id,720,480)
+
+						var fileName = event.currentTarget.name + ".stl";
+						var loader=new THREE.STLLoader();
+						
+						/*loader.load('./models/' + fileName, function ( geometry ) {
+							scene.remove( model );
+							var material = new THREE.MeshLambertMaterial({ ambient: 0xFBB917,color: 0x999999 });
+							var mesh = new THREE.Mesh(geometry, material);
+							model = mesh;
+							mesh.scale.set( 50, 50, 50 );
+							mesh.position.setY(0);
+							scene.add( mesh );
+							renderer.render(scene, camera);
+						});*/
+					};
+					$newModelGallery[0].appendChild(templi);
+					$( "li", $newModelGallery ).draggable({
+							cancel: "a.ui-icon", // clicking an icon won't initiate dragging
+							revert: "invalid", // when not dropped, the item will revert back to its initial position
+							containment: "document",
+							helper: "clone",
+							cursor: "move"
+					});
+				}				
+				if(!sign) {
+					console.log(shapeList[ i ]._id);
+				}
+				if(sign) {
+					for(var k = 0; k < categoryContainerArray.length; k++) {
+						if(categoryContainerArray[k].categoryId == annotationList[j].categoryId) {
+							dropImage(templi, categoryContainerArray[k].div)
+							break;
+						}
+					
+					}
 				}
 
-				var thumbPath = shapeList[ i ].shapeThumbPath;
-				var shapeName = shapeList[ i ].shapeName;
-				templi.name = shapeName;
-				templi.id = shapeList[ i ]._id;
-				newModels[templi.name] = templi;
-				newModelAmount++;
-				
-					
-				if(groupAmount > 1) {
-					//socket.emit('addModel', tempString[0]);
-				}
-				tempimg.src = thumbPath;
-				templi.appendChild(tempimg);
-				
-				templi.onclick = function(event){
-					//event.cancelBubble = true;
-					showIframe("http://shapenet.cs.stanford.edu/view-model?modelId=3dw." + templi.id,720,480)
-
-					var fileName = event.currentTarget.name + ".stl";
-					var loader=new THREE.STLLoader();
-					
-					/*loader.load('./models/' + fileName, function ( geometry ) {
-						scene.remove( model );
-						var material = new THREE.MeshLambertMaterial({ ambient: 0xFBB917,color: 0x999999 });
-						var mesh = new THREE.Mesh(geometry, material);
-						model = mesh;
-						mesh.scale.set( 50, 50, 50 );
-						mesh.position.setY(0);
-						scene.add( mesh );
-						renderer.render(scene, camera);
-					});*/
-				};
-				$newModelGallery[0].appendChild(templi);
-				$( "li", $newModelGallery ).draggable({
-						cancel: "a.ui-icon", // clicking an icon won't initiate dragging
-						revert: "invalid", // when not dropped, the item will revert back to its initial position
-						containment: "document",
-						helper: "clone",
-						cursor: "move"
-				});
 			}	
 		}
 		
@@ -570,6 +579,7 @@
 				jsonpCallback: 'callback', // this is not relevant to the POST anymore
 				success: function (data) {
 					categoryList = data;
+					getClassificationShapes();
 					displayCategories();
 				},
 				error: function (xhr, status, error) {
@@ -579,16 +589,22 @@
 			});
 		};
 		
+		
+		var categoryContainerArray = new Array();
+		
 		var displayCategories = function() {
-			for(var category in categoryList) {
-				createGroup();
+			for(var i in categoryList) {
+				createCategoryContainer(categoryList[i]);
 			}
+			createGroup();
 		};
 		
 		
 		var annotation = function(categoryId, shapeId) {
 			var data = {shapeId:shapeId,
-						categoryId:categoryId};
+						categoryId:categoryId,
+						classificationId:currentClassificationId};
+			
 			$.ajax({
 			url: 'http://114.212.85.53:3000/annotation',
 			data: data,
@@ -607,6 +623,130 @@
 		
 		var inputClicked = false;
 		var inputFocused;
+		
+		var categoryContainer = function(category) {
+			var containerDiv = document.createElement("div");
+			$( "#groupGallery" )[0].appendChild(containerDiv);
+			containerDiv.id = groupAmount;
+			containerDiv.className = "group ui-widget-content ui-state-default";
+			containerDiv.used = true;
+			containerDiv.modelAmount = 0;
+			containerDiv.style.backgroundColor = colorPaletteStrRGB[containerDiv.id];
+			containerDiv.categoryName = category.categoryName;
+			containerDiv.categoryId = category._id;
+			containerDiv.onclick = function() {
+				if(inputClicked) {
+					inputFocused.readOnly = true;
+					inputFocused.className = "a";
+					inputClicked = false;
+					return;
+				}
+				show(containerDiv);
+			};
+			
+			var inputdiv = document.createElement("input");
+			inputdiv.ondblclick = function(event) {
+				event.cancelBubble = true;
+			}
+			inputdiv = $( "<input class='a' id='test' readonly='readonly' value='Click'  type='text' style = 'width:90%'/>" ).appendTo( containerDiv );
+			inputdiv[0].value = category.categoryName;
+			inputdiv[0].ondblclick = function(event) {
+				event.cancelBubble = true;
+				this.readOnly = false;
+				this.className = "b";
+				inputFocused = this;
+			}
+			inputdiv[0].onclick = function(event) {
+				event.cancelBubble = true;
+				this.readOnly = false;
+				this.className = "b";
+				inputClicked = true;
+				inputFocused = this;
+			}			
+			inputdiv[0].onblur=function(event){
+				event.cancelBubble = true;
+			  this.readOnly = true;
+			  this.className = "a";
+			  inputClicked = false;
+			};
+			
+			
+			
+			return containerDiv;
+		};
+		
+		function dropImage( $item, target ) {
+			target.modelAmount++;
+
+			var $list = $( "ul", target ).length ?
+			  $( "ul", target ) :
+			  $( "<ul class='modelGallery ui-helper-reset'/>" ).appendTo( target );
+			$item.style.backgroundColor = colorPaletteStrRGB[target.id];
+			$list.append( $item );
+			$item.style.backgroundColor = "rgba(1,1,1,0)"
+			$item.style.width = "30px";
+			if(target.modelAmount > 2) {
+				$item.style.display = "none";
+				
+			}
+			else {
+				$item.style.display = "";
+			}
+			return $item;
+		}
+
+		var createCategoryContainer = function(category) {
+
+			var containerDiv = categoryContainer(category);
+			categoryContainerArray.push({div:containerDiv,categoryId:category._id});
+			
+			var categoryAmount = groupAmount + 1;
+	
+			$( "#"+groupAmount ).droppable({
+			  //accept: "#newModelGallery > li",
+			  activeClass: "ui-state-highlight",
+			  drop: function( event, ui ) {
+				var temp = ui.draggable[0].id.split("_");
+				if(temp[0] == "newModelGroup") {
+					while(ui.draggable[0].childNodes.length > 0) {
+						delete newModels[ui.draggable[0].childNodes[0].name];
+						dropImage( $("#"+ui.draggable[0].childNodes[0].name)[0], event.target);
+
+						if(event.target.used == false) {
+							event.target.used = true;
+							event.target.style.backgroundColor = colorPaletteStrRGB[event.target.id];
+							createGroup();
+							event.target.categoryId = createCategoryAndAnnotation(event.target.categoryName, ui.draggable[0].id, event.target);
+						}
+						else {
+							annotation(event.target.categoryId, ui.draggable[0].id);
+						}
+
+					}
+
+					$("#newModelGallery")[0].removeChild($("#"+ui.draggable[0].id)[0]);
+				}
+				else {
+					if(event.target.used == false) {
+						event.target.used = true;
+						event.target.style.backgroundColor = colorPaletteStrRGB[event.target.id];
+						createGroup();
+						createCategoryAndAnnotation(event.target.categoryName, ui.draggable[0].id, event.target);
+					}
+					else {
+						annotation(event.target.categoryId, ui.draggable[0].id);
+					}
+					dropImage( ui.draggable[0], event.target);
+
+					delete newModels[ui.draggable.context.name];
+				  }
+				  
+			  }
+			});
+			groupAmount++;
+		};		
+		
+		
 		var createGroup = function() {
 			var tempdiv = document.createElement("div");
 			$( "#groupGallery" )[0].appendChild(tempdiv);
@@ -615,9 +755,7 @@
 			tempinput.ondblclick = function(event) {
 				event.cancelBubble = true;
 			}
-			tempinput = $( "<input class='a' id='test' readonly='readonly' value='Click'  type='text' style = 'width:90%'/>" ).appendTo( tempdiv );
-			//$( "<input class='a' id='test' readonly='readonly' value='Click'  type='text' style = 'width:90%'/>" ).appendTo( tempdiv );
-			
+			tempinput = $( "<input class='a' id='test' readonly='readonly' value='Click'  type='text' style = 'width:90%'/>" ).appendTo( tempdiv );			
 			
 			var categoryAmount = groupAmount + 1;
 			var categoryName = "Category" + categoryAmount;
@@ -648,7 +786,6 @@
 			tempdiv.className = "group ui-widget-content ui-state-default";
 			tempdiv.used = false;
 			tempdiv.modelAmount = 0;
-			
 			tempdiv.onclick = function() {
 				if(inputClicked) {
 					 inputFocused.readOnly = true;
@@ -656,10 +793,7 @@
 					 inputClicked = false;
 					return;
 				}
-
 				show(tempdiv);
-				
-				
 			}
 			$( "#"+groupAmount ).droppable({
 			  //accept: "#newModelGallery > li",
@@ -672,7 +806,7 @@
 						
 						
 						delete newModels[ui.draggable[0].childNodes[0].name];
-						dropImage( $("#"+ui.draggable[0].childNodes[0].name), event.target);
+						dropImage( $("#"+ui.draggable[0].childNodes[0].name)[0], event.target);
 
 						if(event.target.used == false) {
 							event.target.used = true;
@@ -709,7 +843,7 @@
 					else {
 						annotation(event.target.categoryId, ui.draggable[0].id);
 					}
-					dropImage( ui.draggable, event.target);
+					dropImage( ui.draggable[0], event.target);
 
 					delete newModels[ui.draggable.context.name];
 				  }
