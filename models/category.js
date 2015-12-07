@@ -57,3 +57,16 @@ Category.getAllByClassificationId = function get(classificationId, callback) {
 		}
 	});	
 };
+
+Category.updateNameByCategoryId =  function get(categoryId, newName, callback) {
+	CategoryModel.update({_id:categoryId}, {categoryName:newName},  function(err, doc){
+		if (err) {
+			return callback(err, null);
+		}
+		if (doc) {
+			callback(err, doc);
+		} else {
+			callback(err, null);
+		}
+	});	
+};

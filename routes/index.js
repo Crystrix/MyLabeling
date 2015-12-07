@@ -10,6 +10,7 @@ var Classification = require("../models/classification.js");
 var Category = require("../models/category.js");
 var Shape = require("../models/shape.js");
 var Annotation = require("../models/annotation.js");
+var fs = require("fs");  
 /* GET home page. */
 
 
@@ -180,20 +181,34 @@ router.get("/u/:user",function(req,res) {
 });
 
 
-router.post("/renamegroup", function (req, res) {
-		var currentUser = req.session.user;
-		var group = new Group(currentUser.name, req.body.post);
+router.post("/renamecategory", function (req, res) {
         if (req.session.user) {
-			res.send(modelListString); 
+			
+			if(writefile) {
+				var classificationFile = JSON.parse(fs.readFileSync(req.session.user.username+'.txt',"utf-8"));  
+				var i;
+				for(i in classificationFile.classifications) {
+					if(classificationFile.classifications[i].classificationName == req.body['classificationName'])
+						break;
+				}
+				var j;
+				for(j in classificationFile.classifications[i].categories) {
+					if(classificationFile.classifications[i].categories[j].categoryName == req.body['categoryName']) {
+						classificationFile.classifications[i].categories[j].categoryName = req.body['newName'];
+						break;
+					}	
+				}
+				fs.writeFileSync(req.session.user.username+'.txt', JSON.stringify(classificationFile));
+			}
+			
+			Category.updateNameByCategoryId(req.body['categoryId'], req.body['newName'],function(err, classificationList) {
+				res.send("1");
+			});	
+			
+			
         } else {
             res.redirect('/');
         }
-		newUser.save(function(err) {
-		if (err) {
-		  req.flash('error', err);
-		  return res.redirect('/reg');
-		}
-		});
 	});
 
 	
@@ -214,13 +229,31 @@ var allAnnotation = true;
 var writefile = true;
 router.post("/createclassification", function (req, res) {
 	if (req.session.user) {
-		var classification;
+		var classificationFile;
 		if(writefile) {
-			fs.exists(req.seeeion.user.name+'.txt', function( exists ){
-				//var temp = ;
-			}); 
-
-		}
+			fs.exists(req.session.user.username+'.txt', function( exists ){
+				if(exists) {
+					classificationFile = JSON.parse(fs.readFileSync(req.session.user.username+'.txt',"utf-8"));  
+					var newClassification = {};
+					newClassification.classificationName = req.body['classificationName'];
+					newClassification.categories = new Array();
+					classificationFile.classifications.push(newClassification);
+					fs.writeFileSync(req.session.user.username+'.txt', JSON.stringify(classificationFile));
+				}
+				else {
+					classificationFile = {};
+					classificationFile.username = req.session.user.username
+					classificationFile.classifications = new Array();
+					var newClassification = {};
+					newClassification.classificationName = req.body['classificationName'];
+					newClassification.categories = new Array();
+					classificationFile.classifications.push(newClassification);
+					fs.writeFileSync(req.session.user.username+'.txt', JSON.stringify(classificationFile));
+				}
+				
+			});
+			
+		} 
 		
 		
 		if(allAnnotation) {
@@ -260,9 +293,30 @@ router.post("/createclassification", function (req, res) {
 		res.redirect('/reg');
 	}
 });
+
+
 	
 router.post("/createcategory", function (req, res) {
 	if (req.session.user) {
+		if(writefile) {
+			var classificationFile = JSON.parse(fs.readFileSync(req.session.user.username+'.txt',"utf-8"));  
+			var i;
+			for(i in classificationFile.classifications) {
+				if(classificationFile.classifications[i].classificationName == req.body['classificationName'])
+					break;
+			}
+			console.log("AA"+classificationFile.classifications[i].classificationName +" " + req.body['classificationName']);
+			var newCategory = {}; 
+			newCategory.categoryName = req.body['categoryName'];
+			newCategory.shapes = new Array();
+			classificationFile.classifications[i].categories.push(newCategory);
+			fs.writeFileSync(req.session.user.username+'.txt', JSON.stringify(classificationFile));
+		} 
+		
+		
+		
+		
+		
 		var category = new Category({
 			categoryName: req.body['categoryName'], 
 			classificationId: req.body['classificationId']
@@ -280,10 +334,13 @@ router.post("/createcategory", function (req, res) {
 	}
 });
 
+
 router.post("/getclassificationshapes", function (req, res) {
 	if (req.session.user) {
 		var shapeIdList = Classification.getShapeListById(req.body['currentClassificationId'], function(err, shapeIdList) {
-			var shapeList = Shape.findByShapeId(shapeIdList[0]['shapesId'], function(err, shapeList){
+		
+
+		var	shapeList = Shape.findByShapeId(shapeIdList[0]['shapesId'], function(err, shapeList){
 				
 				var shapeIdList = new Array();
 				for(var i in shapeList) {
@@ -317,6 +374,32 @@ router.post("/getclassificationcategories", function (req, res) {
 	
 router.post("/annotation", function (req, res) {
 	if (req.session.user) {
+		if(writefile) {
+			var classificationFile = JSON.parse(fs.readFileSync(req.session.user.username+'.txt',"utf-8"));  
+			var i;
+			for(i in classificationFile.classifications) {
+				if(classificationFile.classifications[i].classificationName == req.body['classificationName'])
+					break;
+			}
+			var j;
+			for(j in classificationFile.classifications[i].categories) {
+				if(classificationFile.classifications[i].categories[j].categoryName == req.body['categoryName'])
+					break;
+			}
+			
+			var	shapeList = Shape.findByShapeId(req.body['shapeId'], function(err, shapeList){
+				var newAnnotaion = {};
+				console.log(shapeList);
+				newAnnotaion.shapeId = req.body['shapeId'];
+				newAnnotaion.shapeName = shapeList[0].shapeName;
+				newAnnotaion.shapePath = shapeList[0].shapePath;
+				classificationFile.classifications[i].categories[j].shapes.push(newAnnotaion);
+				fs.writeFileSync(req.session.user.username+'.txt', JSON.stringify(classificationFile));
+				
+			});
+
+		}
+		
 		var annotation = new Annotation({
 			shapeId: req.body['shapeId'], 
 			categoryId: req.body['categoryId'],

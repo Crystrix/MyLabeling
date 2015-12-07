@@ -38,7 +38,7 @@
 		.group .newModelGallery h5 { display: none; }
 		#groupGallery { list-style-type: none; margin: 0; padding: 0; width: 100%; }
 		#groupGallery div { margin: 3px 3px 3px 0; padding: 1px; float: left; width:24%; height:200px; font-size: 2em; text-align: center; }
-		#groupGallery img { width: 100px;}
+		#groupGallery img { width: 50px; height: 50px}
 		
 		
 		#singleGroup { float: right; width: 32%; min-height: 500px; padding: 1%; }
@@ -267,25 +267,6 @@
 		
 
 		
-		var renameGroup = function(username,prename,newname) {
-			var data = {username:username,
-						prename:prename,
-						newname:newname};
-			$.ajax({
-			url: 'http://114.212.85.53:3000/renamegroup',
-			// dataType: "jsonp",
-			data: data,
-			
-			type: 'POST',
-			jsonpCallback: 'callback', // this is not relevant to the POST anymore
-			success: function (data) {
-			},
-			error: function (xhr, status, error) {
-				console.log('Error: ' + error.message);
-				$('#lblResponse').html('Error connecting to the server.');
-			},
-		});
-		}
 		
 		
 
@@ -336,9 +317,10 @@
 		
 	});
 
-		var currentClassificationId;
-		var classificationList = new Array();
-		var getClassificationList = function() {
+	var currentClassificationId;
+	var currentClassification = {};
+	var classificationList = new Array();
+	var getClassificationList = function() {
 			$.ajax({
 				url: 'http://114.212.85.53:3000/getclassificationlist',
 				type: 'POST',
@@ -346,10 +328,10 @@
 				success: function (data) {
 					classificationList = data;
 					if(classificationList.length > 0) {
+						currentClassification.id = data[0]._id;
+						currentClassification.name = data[0].classificationName;
 						currentClassificationId = data[0]._id;
 						getClassificationCategories();
-						
-						
 					}
 					displayClassificationList();
 				},
@@ -363,19 +345,56 @@
 		var displayClassificationList = function() {
 			for(var i = 0; i < classificationList.length; i++) {
 				var tempdiv = document.createElement("div"); 
-				tempdiv.className = "list-group";
+				if(i == 0) tempdiv.className = "list-group-item active";
+				else tempdiv.className = "list-group-item";
 				tempdiv.textContent = classificationList[i].classificationName;
+				tempdiv.id = classificationList[i]._id;
 				$('#sidebar-items')[0].appendChild(tempdiv);
+				tempdiv.setAttribute('href', "#");
+				tempdiv.onclick = function(){
+					if(currentClassification.id == this.id)
+						return;
+						
+					init();
+					
+					
+					currentClassification.id = this.id;
+					currentClassification.name = this.textContent;
+					currentClassificationId = this.id;
+					getClassificationCategories();
+				};
 			}
+
 		}
 		
 		var createClassification = function() {
 			categoryList = new Array();
-			var tempdiv = document.createElement("div"); 
-			tempdiv.className = "list-group";
+			init();
+			createGroup();
+			if($( "#" + currentClassification.id)[0])
+				$( "#" + currentClassification.id)[0].className = "list-group-item";
+			
+			var tempdiv = document.createElement("div");
+			
+			tempdiv.className = "list-group-item active";
 			var classificationName = "Classification" + (classificationList.length + 1)
 			tempdiv.textContent = classificationName;
 			$('#sidebar-items')[0].appendChild(tempdiv);
+			
+			tempdiv.setAttribute('href', "#");
+			tempdiv.onclick = function(){
+				if(currentClassification.id == this.id)
+					return;
+					
+				init();
+				
+				
+				currentClassification.id = this.id;
+				currentClassification.name = this.textContent;
+				currentClassificationId = this.id;
+				getClassificationCategories();
+			};
+			
 			var data = {classificationName:classificationName};
 			$.ajax({
 				url: 'http://114.212.85.53:3000/createclassification',
@@ -384,6 +403,12 @@
 				jsonpCallback: 'callback', // this is not relevant to the POST anymore
 				success: function (data) {
 					currentClassificationId = data["_id"];
+					
+					currentClassification.id =  data["_id"];
+					currentClassification.name = classificationName;
+					
+					tempdiv.id = data["_id"];
+					
 					classificationList.push({
 						classificationName:classificationName,
 						_id:data._id
@@ -402,7 +427,8 @@
 		var createCategory = function(categoryName) {
 			var data = {
 				categoryName : categoryName,
-				classificationId : currentClassificationId
+				classificationId : currentClassificationId,
+				classificationName: currentClassification.name
 			};
 			$.ajax({
 				url: 'http://114.212.85.53:3000/createcategory',
@@ -412,7 +438,7 @@
 				success: function (data) {
 					categoryList.push({
 						categoryName : categoryName,
-						_id:data._id
+						_id:data._id,
 					});
 					return data._id;
 				},
@@ -425,7 +451,8 @@
 		var createCategoryAndAnnotation = function(categoryName, shapeId, target) {
 			var data = {
 				categoryName : categoryName,
-				classificationId : currentClassificationId
+				classificationId : currentClassificationId,
+				classificationName: currentClassification.name
 			};
 			$.ajax({
 				url: 'http://114.212.85.53:3000/createcategory',
@@ -527,7 +554,7 @@
 					
 					templi.onclick = function(event){
 						//event.cancelBubble = true;
-						showIframe("http://shapenet.cs.stanford.edu/view-model?modelId=3dw." + templi.id,720,480)
+						showIframe("http://shapenet.cs.stanford.edu/view-model?modelId=3dw." + templi.name,720,480)
 
 						var fileName = event.currentTarget.name + ".stl";
 						var loader=new THREE.STLLoader();
@@ -552,9 +579,7 @@
 							cursor: "move"
 					});
 				}				
-				if(!sign) {
-					console.log(shapeList[ i ]._id);
-				}
+
 				if(sign) {
 					for(var k = 0; k < categoryContainerArray.length; k++) {
 						if(categoryContainerArray[k].categoryId == annotationList[j].categoryId) {
@@ -571,7 +596,6 @@
 		
 		var getClassificationCategories = function() {
 			categoryList = new Array();
-			console.log(currentClassificationId);
 			$.ajax({
 				url: 'http://114.212.85.53:3000/getclassificationcategories',
 				data: {currentClassificationId:currentClassificationId},
@@ -601,9 +625,19 @@
 		
 		
 		var annotation = function(categoryId, shapeId) {
+			
+			var i;
+			for(i in categoryList) {
+				if(categoryList[i]._id == categoryId)
+					break;
+			}
+		
 			var data = {shapeId:shapeId,
 						categoryId:categoryId,
-						classificationId:currentClassificationId};
+						classificationId:currentClassificationId,
+						classificationName: currentClassification.name,
+						categoryName: categoryList[i].categoryName
+						};
 			
 			$.ajax({
 			url: 'http://114.212.85.53:3000/annotation',
@@ -623,6 +657,30 @@
 		
 		var inputClicked = false;
 		var inputFocused;
+		
+		
+		var renameCategory = function(classificationId, classificationName, categoryId, categoryName, newName) {
+			var data = {
+						classificationId : classificationId,
+						classificationName : classificationName,
+						categoryId : categoryId,
+						categoryName : categoryName,
+						newName : newName};
+			$.ajax({
+				url: 'http://114.212.85.53:3000/renamecategory',
+				data: data,
+				type: 'POST',
+				jsonpCallback: 'callback', // this is not relevant to the POST anymore
+				success: function (data) {
+				},
+				error: function (xhr, status, error) {
+					console.log('Error: ' + error.message);
+					$('#lblResponse').html('Error connecting to the server.');
+				},
+			});
+		};
+
+		
 		
 		var categoryContainer = function(category) {
 			var containerDiv = document.createElement("div");
@@ -650,30 +708,48 @@
 			}
 			inputdiv = $( "<input class='a' id='test' readonly='readonly' value='Click'  type='text' style = 'width:90%'/>" ).appendTo( containerDiv );
 			inputdiv[0].value = category.categoryName;
-			inputdiv[0].ondblclick = function(event) {
+			/*inputdiv[0].ondblclick = function(event) {
 				event.cancelBubble = true;
 				this.readOnly = false;
 				this.className = "b";
 				inputFocused = this;
-			}
+			}*/
 			inputdiv[0].onclick = function(event) {
 				event.cancelBubble = true;
+				this.preName = this.value;
 				this.readOnly = false;
 				this.className = "b";
 				inputClicked = true;
 				inputFocused = this;
+				
 			}			
 			inputdiv[0].onblur=function(event){
 				event.cancelBubble = true;
-			  this.readOnly = true;
-			  this.className = "a";
-			  inputClicked = false;
+				this.readOnly = true;
+				this.className = "a";
+				inputClicked = false;
+				renameCategory(currentClassification.id, currentClassification.name, this.parentNode.categoryId, this.preName, this.value)
 			};
 			
 			
 			
 			return containerDiv;
 		};
+		
+		function init() {
+
+			$( "#groupGallery" ).empty();
+			$( "#newModelGallery" ).empty();
+			groupAmount = 0;
+			newModels = {};
+			newModelAmount = 0;
+			groupedNewModels = 0;
+			inputClicked = false;
+			categoryContainerArray = new Array();
+			categoryList = new Array();
+			
+		}
+		
 		
 		function dropImage( $item, target ) {
 			target.modelAmount++;
