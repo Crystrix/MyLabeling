@@ -5,12 +5,14 @@ function Shape(shape) {
 	this.shapePath = shape.shapePath;
 	this.shapeFormat = shape.shapeFormat;
 	this.shapeThumbPath = shape.shapeThumbPath;
+	this.shapeSetName = shape.shapeSetName;
 };
 var ShapeSchema = new mongoose.Schema({
 	shapeName: String,
 	shapePath: {type:String, unique: true},
 	shapeFormat: String,
 	shapeThumbPath: String,
+	shapeSetName: String,
 	categoriesId: [{ 
 	  type: mongoose.Schema.ObjectId, 
 	  ref: 'Category' }],
@@ -36,7 +38,8 @@ Shape.prototype.save = function save(callback) {
 		shapeName: this.shapeName,
 		shapePath: this.shapePath,
 		shapeFormat: this.shapeFormat,
-		shapeThumbPath: this.shapeThumbPath
+		shapeThumbPath: this.shapeThumbPath,
+		shapeSetName: this.shapeSetName
 	});
 	shape.save(function(err){callback(err, shape);});	
 }

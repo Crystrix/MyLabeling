@@ -145,18 +145,65 @@ var initShapeDatabase = function(shapeList) {
 			shapeName: shapeList[i]["shapeName"],
 			shapePath: shapeList[i]["shapePath"],
 			shapeFormat: shapeList[i]["shapeFormat"],
-			shapeThumbPath: shapeList[i]["shapeThumbPath"]
+			shapeThumbPath: shapeList[i]["shapeThumbPath"],
+			shapeSetName: shapeList[i]["shapeSetName"]
 		});
 		newShapes.push(newShape);
 	}
 	Shape.create(newShapes, function(err) {});
 }
 
-fs.readdir("./public/models/", function (err, files) {//读取文件夹下文件  
+var shapeRootPath = "./public/models/";
+getShapes(shapeRootPath);
+
+
+function getShapes(shapeRootPath) {
+	
+	var modelList = new Array() ;  
+	var shapeSetNames = fs.readdirSync(shapeRootPath);
+
+	for(var i in shapeSetNames) {
+		var shapeNames = fs.readdirSync(shapeRootPath + shapeSetNames[i]);
+				
+
+		for(var j in shapeNames) {
+			var subfiles = fs.readdirSync(shapeRootPath + shapeSetNames[i] + "/" + shapeNames[j]);
+			var tmpResult={}; 
+			for(var k = 0; k < subfiles.length; k++) {
+				var temp = subfiles[k].split('.'); 
+				var type = temp[temp.length-1];
+				if(type == "jpg" || type == 'png') {
+					tmpResult["shapeThumbPath"] = "./models/" + shapeSetNames[i] + "/" + shapeNames[j] + "/" +subfiles[k]; 
+					break;
+				}
+			}			
+			tmpResult["shapeName"] = shapeNames[j];
+			tmpResult["shapePath"] = "./models/" + shapeSetNames[i] + "/" + shapeNames[j] + "/" + shapeNames[j];
+			tmpResult["shapeFormat"] = "obj";
+			tmpResult["shapeSetName"] = shapeSetNames[i];
+			
+			modelList.push(tmpResult);
+			
+		}
+	}
+	if(init) {
+		initShapeDatabase(modelList);
+	}
+	modelListString = JSON.stringify(modelList);
+}
+
+
+/* fs.readdir(modelRootPath, function (err, files) {//读取文件夹下文件  
+
+	var shapeSetList = new Array();
+	
+	
+	
+
     var count = files.length; 
     var modelList = new Array() ;  
     files.forEach(function (filename) {  
-        fs.readFile(filename, function (data) {  
+        fs.readFile(filename, function (data) {
 			
 			fs.readdir("./public/models/" + filename, function (err, subfiles) {
 				//console.log(subfiles);
@@ -194,7 +241,7 @@ fs.readdir("./public/models/", function (err, files) {//读取文件夹下文件
         });  
     });  
 }); 
-
+ */
 
 
 
