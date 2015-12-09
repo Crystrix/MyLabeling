@@ -13,6 +13,9 @@
 		<script src="js/socket.io-1.3.7.js"></script>
 		<script src="js/three.js"></script>
 		<script src="js/BootSideMenu.js"></script>
+		
+		<script src="js/jquery-prompt21.js"></script>
+		<link rel="stylesheet" href="css/jquery-prompt21.css">
 		<link rel="stylesheet" href="css/BootSideMenu.css">
 
 		<link rel="stylesheet" href="css/jquery-ui.css">
@@ -22,14 +25,23 @@
 	
 	<style>
 			
-		#newModelGallery { float: left; width: 100%;height:60%; overflow: auto; background-color:0xf5f5f5}
+		#newModelGallery { float: left; width: 100%;height:1000px !important; overflow: auto; background-color:0xf5f5f5}
 		.newModelGallery.custom-state-active { background: #eee; }
 		.newModelGallery div { float: left; width: 96px; padding: 0.4em; margin: 0 0.4em 0.4em 0; text-align: center; }
-		.newModelGallery li {width:55px;height:60px;float:left;}
+		.newModelGallery li {width:80px;height:80px;float:left;}
 		.newModelGallery li h5 { margin: 0 0 0.4em; cursor: move; }
 		.newModelGallery li a { float: right; }
 		.newModelGallery li a.ui-icon-zoomin { float: left; }
 		.newModelGallery li img { width: 90%; cursor: move; }
+		
+		.modelGallery { float: left; width: 100%;height:60%; overflow: auto; background-color:0xf5f5f5}
+		.modelGallery.custom-state-active { background: #eee; }
+		.modelGallery div { float: left; width: 96px; padding: 0.4em; margin: 0 0.4em 0.4em 0; text-align: center; }
+		.modelGallery li {width:58px;height:55px;float:left;}
+		.modelGallery li h5 { margin: 0 0 0.4em; cursor: move; }
+		.modelGallery li a { float: right; }
+		.modelGallery li a.ui-icon-zoomin { float: left; }
+		.modelGallery li img { width: 99%; height: 99%; cursor: move; }	
 		
 
 		.group { float: right; width: 100px; height:  100px; }
@@ -38,7 +50,6 @@
 		.group .newModelGallery h5 { display: none; }
 		#groupGallery { list-style-type: none; margin: 0; padding: 0; width: 100%; }
 		#groupGallery div { margin: 3px 3px 3px 0; padding: 1px; float: left; width:24%; height:200px; font-size: 2em; text-align: center; }
-		#groupGallery img { width: 50px; height: 50px}
 		
 		
 		#singleGroup { float: right; width: 32%; min-height: 500px; padding: 1%; }
@@ -63,8 +74,11 @@
 	var groupedNewModels = 0;
 	var controls;
 	var $newModelGallery;
+	
+	var p;
 	$(function() {
 		getClassificationList();
+		p = $(".popup").prompt21();
 		$('#sidebar').BootSideMenu({side:"left", autoClose:false});
 
 		$( "li", $newModelGallery ).draggable({
@@ -367,64 +381,74 @@
 
 		}
 		
+		
 		var createClassification = function() {
-		
-			var tempdiv = document.createElement("div");
-			show(div);
-		
-			categoryList = new Array();
-			init();
-			createGroup();
-			if($( "#" + currentClassification.id)[0])
-				$( "#" + currentClassification.id)[0].className = "list-group-item";
-			
-			var tempdiv = document.createElement("div");
-			
-			tempdiv.className = "list-group-item active";
-			var classificationName = "Classification" + (classificationList.length + 1)
-			tempdiv.textContent = classificationName;
-			$('#sidebar-items')[0].appendChild(tempdiv);
-			
-			tempdiv.setAttribute('href', "#");
-			tempdiv.onclick = function(){
-				if(currentClassification.id == this.id)
-					return;
-					
+		console.log("0dsad");
+			p.getData(function (err, data) {
+				console.log(JSON.stringify(data, null, 2));
+				
+				categoryList = new Array();
 				init();
+				createGroup();
+				if($( "#" + currentClassification.id)[0])
+					$( "#" + currentClassification.id)[0].className = "list-group-item";
+				
+				var tempdiv = document.createElement("div");
+				
+				tempdiv.className = "list-group-item active";
+				//var classificationName = "Classification" + (classificationList.length + 1);
+				var classificationName = data.classificationName;
+				tempdiv.textContent = classificationName;
+				$('#sidebar-items')[0].appendChild(tempdiv);
+				
+				tempdiv.setAttribute('href', "#");
+				tempdiv.onclick = function(){
+					if(currentClassification.id == this.id)
+						return;
+						
+					init();
+					
+					
+					currentClassification.id = this.id;
+					currentClassification.name = this.textContent;
+					currentClassificationId = this.id;
+					getClassificationCategories();
+				};
+				
+				var data = {classificationName:classificationName,
+							classificationDescription:data.classificationDescription};
+				$.ajax({
+					url: 'http://114.212.85.53:3000/createclassification',
+					data: data,
+					type: 'POST',
+					jsonpCallback: 'callback', // this is not relevant to the POST anymore
+					success: function (data) {
+						currentClassificationId = data["_id"];
+						
+						currentClassification.id =  data["_id"];
+						currentClassification.name = classificationName;
+						
+						tempdiv.id = data["_id"];
+						
+						classificationList.push({
+							classificationName:classificationName,
+							_id:data._id
+						});
+						getClassificationShapes();
+						$("#classificationName")[0].value = "Classification" + (classificationList.length + 1);
+						$("#classificationDescription")[0].value = "";
+					},
+					error: function (xhr, status, error) {
+						console.log('Error: ' + error.message);
+						$('#lblResponse').html('Error connecting to the server.');
+					},
+				});				
 				
 				
-				currentClassification.id = this.id;
-				currentClassification.name = this.textContent;
-				currentClassificationId = this.id;
-				getClassificationCategories();
-			};
-			
-			var data = {classificationName:classificationName};
-			$.ajax({
-				url: 'http://114.212.85.53:3000/createclassification',
-				data: data,
-				type: 'POST',
-				jsonpCallback: 'callback', // this is not relevant to the POST anymore
-				success: function (data) {
-					currentClassificationId = data["_id"];
-					
-					currentClassification.id =  data["_id"];
-					currentClassification.name = classificationName;
-					
-					tempdiv.id = data["_id"];
-					
-					classificationList.push({
-						classificationName:classificationName,
-						_id:data._id
-					});
-					getClassificationShapes();
-
-				},
-				error: function (xhr, status, error) {
-					console.log('Error: ' + error.message);
-					$('#lblResponse').html('Error connecting to the server.');
-				},
+				
 			});
+		
+
 		};
 		
 		var categoryList = new Array();
@@ -512,6 +536,7 @@
 				jsonpCallback: 'callback', // this is not relevant to the POST anymore
 				success: function (data) {
 					shapeList = data.shapeList;
+					shapeList.sort(function(){ return 0.5 - Math.random(); }); 
 					annotationList = data.annotationList;
 					displayShapes();
 				},
@@ -561,7 +586,7 @@
 						showIframe("http://shapenet.cs.stanford.edu/view-model?modelId=3dw." + templi.name,720,480)
 
 						var fileName = event.currentTarget.name + ".stl";
-						var loader=new THREE.STLLoader();
+						//var loader=new THREE.STLLoader();
 						
 						/*loader.load('./models/' + fileName, function ( geometry ) {
 							scene.remove( model );
@@ -764,14 +789,14 @@
 			$item.style.backgroundColor = colorPaletteStrRGB[target.id];
 			$list.append( $item );
 			$item.style.backgroundColor = "rgba(1,1,1,0)"
-			$item.style.width = "30px";
-			if(target.modelAmount > 2) {
-				$item.style.display = "none";
+			//$item.style.width = "30px";
+			//if(target.modelAmount > 4) {
+			//	$item.style.display = "none";
 				
-			}
-			else {
+			//}
+			//else {
 				$item.style.display = "";
-			}
+			//}
 			return $item;
 		}
 
@@ -1053,6 +1078,50 @@
 			<div id="groupGallery">
 			</div>
 		</div>
+		
+		
+		
+		
+		<div class="popup" style="display: none;">
+			<form class="form-horizontal">
+				<fieldset>
+
+				<!-- Form Name -->
+				<legend>Create New Classification</legend>
+
+				<!-- Text input-->
+				<div class="form-group">
+				  <label class="col-md-4 control-label" for="name">Classification Name</label>
+				  <div class="col-md-6">
+				  <input id="classificationName" name="classificationName" type="text" placeholder="" class="form-control input-md" required="" value="Classification1">
+				  <span class="help-block">New classification name.</span>
+				  </div>
+				</div>
+
+				<!-- Text input-->
+				<div class="form-group">
+				  <label class="col-md-4 control-label" for="name">Description</label>
+				  <div class="col-md-6">
+				  <input id="classificationDescription" name="classificationDescription" type="text" placeholder="" class="form-control input-md" value="">
+				  <span class="help-block">The description for this classification.</span>
+				  </div>
+				</div>
+
+
+				<!-- Button (Double) -->
+				<div class="form-group">
+				  <label class="col-md-4 control-label" for="cancel"></label>
+				  <div class="col-md-6">
+					<button type="submit" id="save" class="btn btn-success submit">Submit</button>
+					<button type="button" id="cancel" class="btn btn-default cancel">Cancel</button>
+				  </div>
+				</div>
+
+				</fieldset>
+			</form>
+		</div>
+				
+		
 		
 	</body>
 </html>

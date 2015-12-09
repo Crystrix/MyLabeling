@@ -236,6 +236,7 @@ router.post("/createclassification", function (req, res) {
 					classificationFile = JSON.parse(fs.readFileSync(req.session.user.username+'.txt',"utf-8"));  
 					var newClassification = {};
 					newClassification.classificationName = req.body['classificationName'];
+					newClassification.classificationDescription = req.body['classificationDescription'];
 					newClassification.categories = new Array();
 					classificationFile.classifications.push(newClassification);
 					fs.writeFileSync(req.session.user.username+'.txt', JSON.stringify(classificationFile));
@@ -246,6 +247,7 @@ router.post("/createclassification", function (req, res) {
 					classificationFile.classifications = new Array();
 					var newClassification = {};
 					newClassification.classificationName = req.body['classificationName'];
+					newClassification.classificationDescription = req.body['classificationDescription'];
 					newClassification.categories = new Array();
 					classificationFile.classifications.push(newClassification);
 					fs.writeFileSync(req.session.user.username+'.txt', JSON.stringify(classificationFile));
@@ -261,7 +263,8 @@ router.post("/createclassification", function (req, res) {
 			Shape.findAllId(function(err, doc) {
 					shapesIdList = doc;
 					classification	= new Classification({
-						classificationName: req.body['classificationName'], 
+						classificationName: req.body['classificationName'],
+						classificationDescription: req.body['classificationDescription'],
 						userId: req.session.user._id,
 						shapesId: shapesIdList
 					});
@@ -277,6 +280,7 @@ router.post("/createclassification", function (req, res) {
 		else {
 			classification = new Classification({
 			classificationName: req.body['classificationName'], 
+			classificationDescription: req.body['classificationDescription'],
 			userId: req.session.user._id,
 			});
 		

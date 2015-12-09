@@ -8,6 +8,7 @@ function Classification(classification) {
 
 var ClassificationSchema = new mongoose.Schema({
 	classificationName: String,
+	classificationDescription: String,
 	createTime: {type: Date, default: Date.now},
 	userId: { 
 	  type: mongoose.Schema.ObjectId, 
@@ -31,6 +32,7 @@ module.exports = Classification;
 Classification.prototype.save = function save(callback) {
 	var classification = new ClassificationModel({
 		classificationName: this.classificationName,
+		classificationDescription: this.classificationDescription,
 		userId: this.userId,
 		shapesId: this.shapesId
 	});

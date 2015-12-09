@@ -93,7 +93,7 @@
             $self[settings.showFunc].call($self, function () {
                 $(":input:first", $form).focus();
             });
-            $form.on("submit", function () {
+            $form.one("submit", function () {
                 var data = {};
                 $("[name]:input", $form).each(function() {
                     var $this = $(this);
